@@ -34,6 +34,13 @@ export default function SiteHeader() {
           </Link>
 
           <Link
+            href="/orders"
+            className="transition hover:text-black"
+          >
+            Orders
+          </Link>
+
+          <Link
             href="/auth"
             className="rounded-lg border px-4 py-2 transition hover:bg-gray-50"
           >
