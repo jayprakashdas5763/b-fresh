@@ -27,6 +27,16 @@ export default async function AdminLayout({
     redirect("/account");
   }
 
+  async function signOut() {
+    "use server";
+
+    const supabase = await createClient();
+
+    await supabase.auth.signOut();
+
+    redirect("/auth");
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex min-h-screen flex-col lg:flex-row">
@@ -97,6 +107,15 @@ export default async function AdminLayout({
               >
                 My Account
               </Link>
+
+              <form action={signOut} className="mt-1">
+                <button
+                  type="submit"
+                  className="block w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-700"
+                >
+                  Logout
+                </button>
+              </form>
             </div>
           </nav>
         </aside>
