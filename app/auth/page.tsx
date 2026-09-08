@@ -1,9 +1,13 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AuthPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,13 +17,14 @@ export default function AuthPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setLoading(true);
     setMessage("");
 
     try {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim(),
           password,
         });
 
@@ -28,14 +33,17 @@ export default function AuthPage() {
           return;
         }
 
-        setMessage("Login successful.");
+        // Give the browser time to persist the auth session
+        // before navigating to the protected server page.
+        router.push("/account");
+        router.refresh();
       } else {
-        const { error } = await supabase.auth.signUp({
-          email,
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
           password,
           options: {
             data: {
-              full_name: fullName,
+              full_name: fullName.trim(),
             },
           },
         });
@@ -45,10 +53,18 @@ export default function AuthPage() {
           return;
         }
 
-        setMessage(
-          "Account created. Please check your email to confirm your account."
-        );
+        if (data.session) {
+          router.push("/account");
+          router.refresh();
+        } else {
+          setMessage(
+            "Account created. Please check your email to confirm your account."
+          );
+        }
       }
+    } catch (error) {
+      console.error(error);
+      setMessage("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -116,7 +132,7 @@ export default function AuthPage() {
         <button
           type="button"
           onClick={() => {
-            setIsLogin(!isLogin);
+            setIsLogin((value) => !value);
             setMessage("");
           }}
           className="mt-6 w-full text-sm underline"
