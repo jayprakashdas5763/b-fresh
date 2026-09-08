@@ -6,7 +6,6 @@ import { createClient } from "@/lib/supabase/client";
 
 type CartItemProps = {
   itemId: string;
-  productId: string;
   name: string;
   price: number;
   unit: string;
@@ -17,7 +16,6 @@ type CartItemProps = {
 
 export default function CartItem({
   itemId,
-  productId,
   name,
   price,
   unit,
