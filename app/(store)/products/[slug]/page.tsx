@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AddToCartButton from "@/components/add-to-cart-button";
+import ProductImageGallery from "@/components/product-image-gallery";
 
 type ProductPageProps = {
     params: Promise<{
@@ -49,7 +50,6 @@ export default async function ProductPage({
         (a, b) => a.sort_order - b.sort_order
     );
 
-    const primaryImage = images[0];
 
     const isOutOfStock = product.stock_quantity <= 0;
 
@@ -64,20 +64,11 @@ export default async function ProductPage({
                 </Link>
 
                 <div className="mt-8 grid gap-10 lg:grid-cols-2">
-                    {/* Product Image */}
-                    <div className="overflow-hidden rounded-2xl bg-gray-100">
-                        {primaryImage ? (
-                            <img
-                                src={primaryImage.image_url}
-                                alt={primaryImage.alt_text || product.name}
-                                className="aspect-square h-full w-full object-cover"
-                            />
-                        ) : (
-                            <div className="flex aspect-square items-center justify-center">
-                                <span className="text-7xl">🥛</span>
-                            </div>
-                        )}
-                    </div>
+                    {/* Product Image Gallery */}
+                    <ProductImageGallery
+                        productName={product.name}
+                        images={images}
+                    />
 
                     {/* Product Details */}
                     <div className="flex flex-col justify-center">

@@ -2,10 +2,19 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import AdminProductImages from "@/components/admin-product-images";
 
 type Category = {
     id: string;
     name: string;
+};
+
+type ProductImage = {
+    id: string;
+    product_id: string;
+    image_url: string;
+    alt_text: string | null;
+    sort_order: number;
 };
 
 type Product = {
@@ -20,6 +29,7 @@ type Product = {
     stock_quantity: number;
     sku: string | null;
     is_active: boolean;
+    product_images: ProductImage[];
 };
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -30,6 +40,11 @@ export default function ProductsPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
 
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterCategory, setFilterCategory] = useState("all");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterStock, setFilterStock] = useState("all");
+
     const [name, setName] = useState("");
     const [categoryId, setCategoryId] = useState("");
     const [description, setDescription] = useState("");
@@ -38,6 +53,7 @@ export default function ProductsPage() {
     const [unit, setUnit] = useState("piece");
     const [stockQuantity, setStockQuantity] = useState("");
     const [sku, setSku] = useState("");
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState("");
@@ -54,6 +70,17 @@ export default function ProductsPage() {
             .replace(/^-+|-+$/g, "");
     }
 
+    function getStoragePathFromUrl(imageUrl: string) {
+        const marker = "/storage/v1/object/public/product-images/";
+        const index = imageUrl.indexOf(marker);
+
+        if (index === -1) {
+            return null;
+        }
+
+        return imageUrl.slice(index + marker.length);
+    }
+
     async function loadData() {
         setLoading(true);
         setMessage("");
@@ -67,9 +94,26 @@ export default function ProductsPage() {
 
             supabase
                 .from("products")
-                .select(
-                    "id, category_id, name, slug, description, price, compare_at_price, unit, stock_quantity, sku, is_active"
-                )
+                .select(`
+                    id,
+                    category_id,
+                    name,
+                    slug,
+                    description,
+                    price,
+                    compare_at_price,
+                    unit,
+                    stock_quantity,
+                    sku,
+                    is_active,
+                    product_images (
+                        id,
+                        product_id,
+                        image_url,
+                        alt_text,
+                        sort_order
+                    )
+                `)
                 .order("created_at", { ascending: false }),
         ]);
 
@@ -114,9 +158,55 @@ export default function ProductsPage() {
         setImagePreview(URL.createObjectURL(file));
     }
 
+    function startEdit(product: Product) {
+        setEditingId(product.id);
+        setName(product.name);
+        setCategoryId(product.category_id ?? "");
+        setDescription(product.description ?? "");
+        setPrice(String(product.price));
+        setCompareAtPrice(
+            product.compare_at_price !== null
+                ? String(product.compare_at_price)
+                : ""
+        );
+        setUnit(product.unit);
+        setStockQuantity(String(product.stock_quantity));
+        setSku(product.sku ?? "");
+
+        setImageFile(null);
+        setImagePreview("");
+        setMessage("");
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
+    }
+
     async function handleSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
+        const normalizedSku = sku.trim().toUpperCase();
+
+        if (normalizedSku) {
+            if (!/^[A-Z0-9_-]{2,50}$/.test(normalizedSku)) {
+                setMessage(
+                    "SKU must be 2–50 characters and contain only letters, numbers, hyphens, or underscores."
+                );
+                return;
+            }
+
+            const duplicateSku = products.find(
+                (product) =>
+                    product.sku?.toUpperCase() === normalizedSku &&
+                    product.id !== editingId
+            );
+
+            if (duplicateSku) {
+                setMessage("This SKU is already used by another product.");
+                return;
+            }
+        }
         const productName = name.trim();
         const productPrice = Number(price);
         const productStock = Number(stockQuantity);
@@ -161,37 +251,72 @@ export default function ProductsPage() {
         try {
             const slug = createSlug(productName);
 
-            const { data: product, error: productError } = await supabase
-                .from("products")
-                .insert({
-                    category_id: categoryId,
-                    name: productName,
-                    slug,
-                    description: description.trim() || null,
-                    price: productPrice,
-                    compare_at_price: productComparePrice,
-                    unit: unit.trim() || "piece",
-                    stock_quantity: productStock,
-                    sku: sku.trim() || null,
-                })
-                .select("id")
-                .single();
+            let product;
 
-            if (productError) {
-                throw new Error(productError.message);
+            if (editingId) {
+                const { data: updatedProduct, error: updateError } =
+                    await supabase
+                        .from("products")
+                        .update({
+                            category_id: categoryId,
+                            name: productName,
+                            slug,
+                            description: description.trim() || null,
+                            price: productPrice,
+                            compare_at_price: productComparePrice,
+                            unit: unit.trim() || "piece",
+                            stock_quantity: productStock,
+                            sku: normalizedSku  || null,
+                            updated_at: new Date().toISOString(),
+                        })
+                        .eq("id", editingId)
+                        .select("id")
+                        .single();
+
+                if (updateError) {
+                    throw new Error(updateError.message);
+                }
+
+                product = updatedProduct;
+            } else {
+                const { data: createdProduct, error: productError } =
+                    await supabase
+                        .from("products")
+                        .insert({
+                            category_id: categoryId,
+                            name: productName,
+                            slug,
+                            description: description.trim() || null,
+                            price: productPrice,
+                            compare_at_price: productComparePrice,
+                            unit: unit.trim() || "piece",
+                            stock_quantity: productStock,
+                            sku: normalizedSku  || null,
+                        })
+                        .select("id")
+                        .single();
+
+                if (productError) {
+                    throw new Error(productError.message);
+                }
+
+                product = createdProduct;
             }
 
-            createdProductId = product.id;
+            if (!editingId) {
+                createdProductId = product.id;
+            }
 
             if (imageFile) {
                 const extension =
                     imageFile.name.split(".").pop()?.toLowerCase() || "jpg";
 
-                uploadedPath = `${product.id}/${crypto.randomUUID()}.${extension}`;
+                const newStoragePath =
+                    `${product.id}/${crypto.randomUUID()}.${extension}`;
 
                 const { error: uploadError } = await supabase.storage
                     .from("product-images")
-                    .upload(uploadedPath, imageFile, {
+                    .upload(newStoragePath, imageFile, {
                         cacheControl: "3600",
                         upsert: false,
                         contentType: imageFile.type,
@@ -201,26 +326,92 @@ export default function ProductsPage() {
                     throw new Error(uploadError.message);
                 }
 
+                uploadedPath = newStoragePath;
+
                 const {
                     data: { publicUrl },
                 } = supabase.storage
                     .from("product-images")
-                    .getPublicUrl(uploadedPath);
+                    .getPublicUrl(newStoragePath);
 
-                const { error: imageRecordError } = await supabase
-                    .from("product_images")
-                    .insert({
-                        product_id: product.id,
-                        image_url: publicUrl,
-                        alt_text: productName,
-                        sort_order: 0,
-                    });
+                if (editingId) {
+                    const {
+                        data: existingImage,
+                        error: existingImageError,
+                    } = await supabase
+                        .from("product_images")
+                        .select("id, image_url")
+                        .eq("product_id", product.id)
+                        .eq("sort_order", 0)
+                        .maybeSingle();
 
-                if (imageRecordError) {
-                    throw new Error(imageRecordError.message);
+                    if (existingImageError) {
+                        throw new Error(existingImageError.message);
+                    }
+
+                    if (existingImage) {
+                        const { error: imageUpdateError } = await supabase
+                            .from("product_images")
+                            .update({
+                                image_url: publicUrl,
+                                alt_text: productName,
+                            })
+                            .eq("id", existingImage.id);
+
+                        if (imageUpdateError) {
+                            throw new Error(imageUpdateError.message);
+                        }
+
+                        const oldStoragePath = getStoragePathFromUrl(
+                            existingImage.image_url
+                        );
+
+                        if (oldStoragePath) {
+                            const { error: removeError } =
+                                await supabase.storage
+                                    .from("product-images")
+                                    .remove([oldStoragePath]);
+
+                            if (removeError) {
+                                console.error(
+                                    "Unable to remove old image:",
+                                    removeError.message
+                                );
+                            }
+                        }
+                    } else {
+                        const { error: imageInsertError } = await supabase
+                            .from("product_images")
+                            .insert({
+                                product_id: product.id,
+                                image_url: publicUrl,
+                                alt_text: productName,
+                                sort_order: 0,
+                            });
+
+                        if (imageInsertError) {
+                            throw new Error(imageInsertError.message);
+                        }
+                    }
+                } else {
+                    const { error: imageInsertError } = await supabase
+                        .from("product_images")
+                        .insert({
+                            product_id: product.id,
+                            image_url: publicUrl,
+                            alt_text: productName,
+                            sort_order: 0,
+                        });
+
+                    if (imageInsertError) {
+                        throw new Error(imageInsertError.message);
+                    }
                 }
             }
 
+            const wasEditing = Boolean(editingId);
+
+            setEditingId(null);
             setName("");
             setCategoryId("");
             setDescription("");
@@ -233,9 +424,13 @@ export default function ProductsPage() {
             setImagePreview("");
 
             setMessage(
-                imageFile
-                    ? "Product and image created successfully."
-                    : "Product created successfully."
+                wasEditing
+                    ? imageFile
+                        ? "Product and image updated successfully."
+                        : "Product updated successfully."
+                    : imageFile
+                        ? "Product and image created successfully."
+                        : "Product created successfully."
             );
 
             await loadData();
@@ -311,6 +506,41 @@ export default function ProductsPage() {
         );
     }
 
+    const filteredProducts = products.filter((product) => {
+        const search = searchTerm.trim().toLowerCase();
+
+        const matchesSearch =
+            !search ||
+            product.name.toLowerCase().includes(search) ||
+            product.sku?.toLowerCase().includes(search) ||
+            product.slug.toLowerCase().includes(search);
+
+        const matchesCategory =
+            filterCategory === "all" ||
+            product.category_id === filterCategory;
+
+        const matchesStatus =
+            filterStatus === "all" ||
+            (filterStatus === "active" && product.is_active) ||
+            (filterStatus === "inactive" && !product.is_active);
+
+        const matchesStock =
+            filterStock === "all" ||
+            (filterStock === "in-stock" && product.stock_quantity > 5) ||
+            (filterStock === "low-stock" &&
+                product.stock_quantity > 0 &&
+                product.stock_quantity <= 5) ||
+            (filterStock === "out-of-stock" &&
+                product.stock_quantity === 0);
+
+        return (
+            matchesSearch &&
+            matchesCategory &&
+            matchesStatus &&
+            matchesStock
+        );
+    });
+
     return (
         <main className="min-h-screen bg-gray-50 p-6 md:p-8">
             <div className="mx-auto max-w-6xl">
@@ -323,7 +553,34 @@ export default function ProductsPage() {
                 </div>
 
                 <section className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
-                    <h2 className="mb-5 text-xl font-semibold">Add Product</h2>
+                    <div className="mb-5 flex items-center justify-between gap-3">
+                        <h2 className="text-xl font-semibold">
+                            {editingId ? "Edit Product" : "Add Product"}
+                        </h2>
+
+                        {editingId && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setEditingId(null);
+                                    setName("");
+                                    setCategoryId("");
+                                    setDescription("");
+                                    setPrice("");
+                                    setCompareAtPrice("");
+                                    setUnit("piece");
+                                    setStockQuantity("");
+                                    setSku("");
+                                    setImageFile(null);
+                                    setImagePreview("");
+                                    setMessage("");
+                                }}
+                                className="text-sm font-medium text-gray-500 hover:text-gray-900"
+                            >
+                                Cancel
+                            </button>
+                        )}
+                    </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <input
@@ -446,6 +703,18 @@ export default function ProductsPage() {
                                     />
                                 </div>
                             )}
+
+                            {editingId && (
+                                <AdminProductImages
+                                    productId={editingId}
+                                    productName={name}
+                                    images={
+                                        products.find((product) => product.id === editingId)
+                                            ?.product_images ?? []
+                                    }
+                                    onImagesChanged={loadData}
+                                />
+                            )}
                         </div>
 
                         <button
@@ -453,7 +722,13 @@ export default function ProductsPage() {
                             disabled={saving}
                             className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
                         >
-                            {saving ? "Creating product..." : "Add Product"}
+                            {saving
+                                ? editingId
+                                    ? "Updating product..."
+                                    : "Creating product..."
+                                : editingId
+                                    ? "Update Product"
+                                    : "Add Product"}
                         </button>
                     </form>
 
@@ -466,48 +741,164 @@ export default function ProductsPage() {
 
                 <section className="rounded-2xl bg-white p-6 shadow-sm">
                     <h2 className="mb-5 text-xl font-semibold">Products</h2>
+                    <div className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(event) => setSearchTerm(event.target.value)}
+                            placeholder="Search by name or SKU"
+                            className="rounded-lg border border-gray-300 p-3 text-gray-900"
+                        />
+
+                        <select
+                            value={filterCategory}
+                            onChange={(event) =>
+                                setFilterCategory(event.target.value)
+                            }
+                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
+                        >
+                            <option value="all">All Categories</option>
+
+                            {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
+
+                        <select
+                            value={filterStatus}
+                            onChange={(event) =>
+                                setFilterStatus(event.target.value)
+                            }
+                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
+                        >
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+
+                        <select
+                            value={filterStock}
+                            onChange={(event) =>
+                                setFilterStock(event.target.value)
+                            }
+                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
+                        >
+                            <option value="all">All Stock</option>
+                            <option value="in-stock">In Stock</option>
+                            <option value="low-stock">Low Stock</option>
+                            <option value="out-of-stock">Out of Stock</option>
+                        </select>
+                    </div>
 
                     {loading ? (
                         <p className="text-gray-500">Loading products...</p>
-                    ) : products.length === 0 ? (
-                        <p className="text-gray-500">No products yet.</p>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="rounded-xl border border-dashed p-8 text-center">
+                            <p className="font-medium text-gray-900">
+                                {products.length === 0
+                                    ? "No products yet."
+                                    : "No products match your filters."}
+                            </p>
+
+                            {products.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSearchTerm("");
+                                        setFilterCategory("all");
+                                        setFilterStatus("all");
+                                        setFilterStock("all");
+                                    }}
+                                    className="mt-3 text-sm font-medium text-green-700 hover:text-green-800"
+                                >
+                                    Clear filters
+                                </button>
+                            )}
+                        </div>
                     ) : (
                         <div className="space-y-3">
-                            {products.map((product) => (
-                                <div key={product.id} className="rounded-xl border p-4">
+                            {filteredProducts.map((product) => (
+
+                                <div
+                                    key={product.id}
+                                    className="rounded-xl border p-4"
+                                >
                                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                                        <div>
-                                            <h3 className="font-semibold">{product.name}</h3>
+                                        {/* Product info */}
+                                        <div className="flex min-w-0 gap-4">
+                                            {/* Product image */}
+                                            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                                                {product.product_images?.length > 0 ? (
+                                                    <img
+                                                        src={
+                                                            [...product.product_images].sort(
+                                                                (a, b) =>
+                                                                    a.sort_order - b.sort_order
+                                                            )[0]?.image_url
+                                                        }
+                                                        alt={
+                                                            [...product.product_images].sort(
+                                                                (a, b) =>
+                                                                    a.sort_order - b.sort_order
+                                                            )[0]?.alt_text ??
+                                                            product.name
+                                                        }
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-full items-center justify-center">
+                                                        <span className="text-2xl">🥛</span>
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                            <p className="text-sm text-gray-500">
-                                                {getCategoryName(product.category_id)}
-                                            </p>
+                                            {/* Product details */}
+                                            <div className="min-w-0">
+                                                <h3 className="font-semibold text-gray-900">
+                                                    {product.name}
+                                                </h3>
 
-                                            <p className="mt-1">
-                                                ₹{Number(product.price).toFixed(2)} / {product.unit}
-                                            </p>
-
-                                            <p className="text-sm text-gray-600">
-                                                Stock: {product.stock_quantity}
-                                            </p>
-
-                                            {product.sku && (
                                                 <p className="text-sm text-gray-500">
-                                                    SKU: {product.sku}
+                                                    {getCategoryName(product.category_id)}
                                                 </p>
-                                            )}
 
-                                            <span
-                                                className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${product.is_active
+                                                <p className="mt-1 text-gray-900">
+                                                    ₹{Number(product.price).toFixed(2)} / {product.unit}
+                                                </p>
+
+                                                <p className="text-sm text-gray-600">
+                                                    Stock: {product.stock_quantity}
+                                                </p>
+
+                                                {product.sku && (
+                                                    <p className="text-sm text-gray-500">
+                                                        SKU: {product.sku}
+                                                    </p>
+                                                )}
+
+                                                <span
+                                                    className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${product.is_active
                                                         ? "bg-green-100 text-green-700"
                                                         : "bg-gray-100 text-gray-600"
-                                                    }`}
-                                            >
-                                                {product.is_active ? "Active" : "Inactive"}
-                                            </span>
+                                                        }`}
+                                                >
+                                                    {product.is_active ? "Active" : "Inactive"}
+                                                </span>
+                                            </div>
                                         </div>
 
-                                        <div className="flex gap-2">
+                                        {/* Actions */}
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => startEdit(product)}
+                                                className="rounded-lg border px-3 py-2 text-sm"
+                                            >
+                                                Edit
+                                            </button>
+
                                             <button
                                                 type="button"
                                                 onClick={() => toggleProduct(product)}

@@ -42,6 +42,11 @@ const ORDER_STATUSES = [
 export default function AdminOrdersPage() {
     const supabase = createClient();
 
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filterStatus, setFilterStatus] = useState("all");
+    const [filterPaymentMethod, setFilterPaymentMethod] = useState("all");
+    const [filterPaymentStatus, setFilterPaymentStatus] = useState("all");
+
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [savingId, setSavingId] = useState<string | null>(null);
@@ -75,7 +80,7 @@ export default function AdminOrdersPage() {
         customer_note,
         admin_note,
         created_at
-      `)
+        `)
             .order("created_at", { ascending: false });
 
         if (error) {
@@ -95,12 +100,46 @@ export default function AdminOrdersPage() {
         setSavingId(orderId);
         setMessage("");
 
+        const currentOrder = orders.find(
+            (order) => order.id === orderId
+        );
+
+        if (!currentOrder) {
+            setMessage("Order not found.");
+            setSavingId(null);
+            return;
+        }
+
+        const updateData: {
+            status: string;
+            updated_at: string;
+            payment_status?: string;
+        } = {
+            status,
+            updated_at: new Date().toISOString(),
+        };
+
+        // COD payment is collected when the order is delivered.
+        if (
+            currentOrder.payment_method === "cod" &&
+            status === "delivered" &&
+            currentOrder.payment_status === "pending"
+        ) {
+            updateData.payment_status = "paid";
+        }
+
+        // Only mark a COD order as refunded when it was previously paid.
+        if (
+            currentOrder.payment_method === "cod" &&
+            status === "refunded" &&
+            currentOrder.payment_status === "paid"
+        ) {
+            updateData.payment_status = "refunded";
+        }
+
         const { error } = await supabase
             .from("orders")
-            .update({
-                status,
-                updated_at: new Date().toISOString(),
-            })
+            .update(updateData)
             .eq("id", orderId);
 
         if (error) {
@@ -109,7 +148,13 @@ export default function AdminOrdersPage() {
             setOrders((current) =>
                 current.map((order) =>
                     order.id === orderId
-                        ? { ...order, status }
+                        ? {
+                            ...order,
+                            status,
+                            payment_status:
+                                updateData.payment_status ??
+                                order.payment_status,
+                        }
                         : order
                 )
             );
@@ -128,6 +173,34 @@ export default function AdminOrdersPage() {
             .join(" ");
     }
 
+    const filteredOrders = orders.filter((order) => {
+        const search = searchTerm.trim().toLowerCase();
+
+        const matchesSearch =
+            !search ||
+            order.order_number.toString().includes(search) ||
+            order.shipping_full_name.toLowerCase().includes(search) ||
+            order.shipping_phone.includes(search);
+
+        const matchesStatus =
+            filterStatus === "all" || order.status === filterStatus;
+
+        const matchesPaymentMethod =
+            filterPaymentMethod === "all" ||
+            order.payment_method === filterPaymentMethod;
+
+        const matchesPaymentStatus =
+            filterPaymentStatus === "all" ||
+            order.payment_status === filterPaymentStatus;
+
+        return (
+            matchesSearch &&
+            matchesStatus &&
+            matchesPaymentMethod &&
+            matchesPaymentStatus
+        );
+    });
+
     return (
         <main className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">
@@ -137,10 +210,73 @@ export default function AdminOrdersPage() {
                             Orders
                         </h1>
 
+
+
                         <p className="mt-2 text-gray-600">
                             Manage incoming B-Fresh orders.
                         </p>
                     </div>
+
+                    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+                        <input
+                            type="text"
+                            placeholder="Search order, customer, phone..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="rounded-lg border px-3 py-2 text-sm"
+                        />
+
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="rounded-lg border px-3 py-2 text-sm"
+                        >
+                            <option value="all">All statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="processing">Processing</option>
+                            <option value="packed">Packed</option>
+                            <option value="out_for_delivery">Out for delivery</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+
+                        <select
+                            value={filterPaymentMethod}
+                            onChange={(e) => setFilterPaymentMethod(e.target.value)}
+                            className="rounded-lg border px-3 py-2 text-sm"
+                        >
+                            <option value="all">All payment methods</option>
+                            <option value="cod">COD</option>
+                            <option value="razorpay">Razorpay</option>
+                        </select>
+
+                        <select
+                            value={filterPaymentStatus}
+                            onChange={(e) => setFilterPaymentStatus(e.target.value)}
+                            className="rounded-lg border px-3 py-2 text-sm"
+                        >
+                            <option value="all">All payment statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="failed">Failed</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSearchTerm("");
+                            setFilterStatus("all");
+                            setFilterPaymentMethod("all");
+                            setFilterPaymentStatus("all");
+                        }}
+                        className="text-sm font-medium text-green-700 hover:underline"
+                    >
+                        Clear filters
+                    </button>
 
                     <button
                         type="button"
@@ -162,7 +298,7 @@ export default function AdminOrdersPage() {
                     <div className="mt-8 rounded-2xl bg-white p-8 text-center">
                         <p className="text-gray-600">Loading orders...</p>
                     </div>
-                ) : orders.length === 0 ? (
+                ) : filteredOrders.length === 0 ? (
                     <div className="mt-8 rounded-2xl border border-dashed bg-white p-10 text-center">
                         <h2 className="text-xl font-semibold text-gray-900">
                             No orders yet
@@ -174,7 +310,7 @@ export default function AdminOrdersPage() {
                     </div>
                 ) : (
                     <div className="mt-8 space-y-5">
-                        {orders.map((order) => (
+                        {filteredOrders.map((order) => (
                             <section
                                 key={order.id}
                                 className="rounded-2xl bg-white p-6 shadow-sm"
@@ -309,10 +445,23 @@ export default function AdminOrdersPage() {
                                                 </span>
                                             </div>
 
-                                            <p className="pt-1 capitalize">
-                                                Payment status:{" "}
-                                                {order.payment_status}
-                                            </p>
+                                            <div className="pt-2">
+                                                <span className="text-sm text-gray-600">
+                                                    Payment status:
+                                                </span>{" "}
+                                                <span
+                                                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${order.payment_status === "paid"
+                                                            ? "bg-green-100 text-green-800"
+                                                            : order.payment_status === "failed"
+                                                                ? "bg-red-100 text-red-800"
+                                                                : order.payment_status === "refunded"
+                                                                    ? "bg-purple-100 text-purple-800"
+                                                                    : "bg-yellow-100 text-yellow-800"
+                                                        }`}
+                                                >
+                                                    {order.payment_status}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

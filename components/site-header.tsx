@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import SiteHeaderNav from "@/components/site-header-nav";
 
 export default async function SiteHeader() {
   const supabase = await createClient();
@@ -10,6 +11,7 @@ export default async function SiteHeader() {
   } = await supabase.auth.getUser();
 
   let isAdmin = false;
+  let cartItemCount = 0;
 
   if (user) {
     const { data: profile } = await supabase
@@ -19,6 +21,19 @@ export default async function SiteHeader() {
       .single();
 
     isAdmin = profile?.role === "admin";
+
+    const { data: cart } = await supabase
+      .from("carts")
+      .select("id, cart_items(quantity)")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (cart?.cart_items) {
+      cartItemCount = cart.cart_items.reduce(
+        (total, item) => total + (item.quantity ?? 0),
+        0
+      );
+    }
   }
 
   async function signOut() {
@@ -31,82 +46,24 @@ export default async function SiteHeader() {
   }
 
   return (
-    <header className="border-b bg-white">
+    <header className="relative border-b bg-white">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="text-2xl font-bold tracking-tight text-gray-900"
+          className="shrink-0 text-2xl font-bold tracking-tight text-gray-900"
         >
           B-Fresh
         </Link>
 
-        <nav className="flex flex-wrap items-center justify-end gap-4 text-sm font-medium text-gray-700">
-          <Link
-            href="/"
-            className="transition hover:text-black"
-          >
-            Home
-          </Link>
+        <div className="flex items-center gap-2">
+          <SiteHeaderNav
+            isLoggedIn={!!user}
+            isAdmin={isAdmin}
+            cartItemCount={cartItemCount}
+            signOut={signOut}
+          />
 
-          <Link
-            href="/products"
-            className="transition hover:text-black"
-          >
-            Products
-          </Link>
-
-          {user && (
-            <>
-              <Link
-                href="/account"
-                className="transition hover:text-black"
-              >
-                Account
-              </Link>
-
-              <Link
-                href="/orders"
-                className="transition hover:text-black"
-              >
-                Orders
-              </Link>
-            </>
-          )}
-
-          {isAdmin && (
-            <Link
-              href="/admin"
-              className="rounded-lg bg-green-700 px-4 py-2 text-white transition hover:bg-green-800"
-            >
-              Admin Panel
-            </Link>
-          )}
-
-          {user ? (
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="rounded-lg border border-gray-300 px-4 py-2 transition hover:bg-gray-50"
-              >
-                Logout
-              </button>
-            </form>
-          ) : (
-            <Link
-              href="/auth"
-              className="rounded-lg border border-gray-300 px-4 py-2 transition hover:bg-gray-50"
-            >
-              Login
-            </Link>
-          )}
-
-          <Link
-            href="/cart"
-            className="rounded-lg bg-black px-4 py-2 text-white transition hover:bg-gray-800"
-          >
-            Cart
-          </Link>
-        </nav>
+        </div>
       </div>
     </header>
   );
