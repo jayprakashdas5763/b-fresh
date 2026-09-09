@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import OrderReceipt from "@/components/order-receipt";
+import CancelOrderButton from "@/components/cancel-order-button";
 
 type OrderPageProps = {
   params: Promise<{
@@ -27,31 +29,33 @@ export default async function OrderPage({
     .from("orders")
     .select(
       `
+      id,
+      order_number,
+      status,
+      payment_method,
+      payment_status,
+      subtotal,
+      delivery_fee,
+      discount_amount,
+      total_amount,
+      shipping_full_name,
+      shipping_phone,
+      shipping_address_line1,
+      shipping_address_line2,
+      shipping_landmark,
+      shipping_city,
+      shipping_state,
+      shipping_postal_code,
+      created_at,
+      order_items (
         id,
-        status,
-        payment_method,
-        payment_status,
-        subtotal,
-        delivery_fee,
-        total_amount,
-        shipping_full_name,
-        shipping_phone,
-        shipping_address_line1,
-        shipping_address_line2,
-        shipping_landmark,
-        shipping_city,
-        shipping_state,
-        shipping_postal_code,
-        created_at,
-        order_items (
-          id,
-          product_name,
-          unit,
-          unit_price,
-          quantity,
-          total_price
-        )
-      `
+        product_name,
+        unit,
+        unit_price,
+        quantity,
+        total_price
+      )
+    `
     )
     .eq("id", id)
     .eq("user_id", user.id)
@@ -99,11 +103,44 @@ export default async function OrderPage({
               >
                 {order.status === "delivered"
                   ? "✓ Delivered"
-                  : order.status.replaceAll("_", " ")
+                  : order.status
                     .replaceAll("_", " ")
                     .replace(/\b\w/g, (char: string) => char.toUpperCase())}
               </span>
             </div>
+
+            {/* Download Receipt */}
+            <div className="mt-4 flex justify-center">
+              <OrderReceipt
+                order={{
+                  orderNumber: order.order_number,
+                  createdAt: order.created_at,
+                  status: order.status,
+                  paymentMethod: order.payment_method,
+                  paymentStatus: order.payment_status,
+                  customerName: order.shipping_full_name,
+                  phone: order.shipping_phone,
+                  addressLine1: order.shipping_address_line1,
+                  addressLine2: order.shipping_address_line2,
+                  landmark: order.shipping_landmark,
+                  city: order.shipping_city,
+                  state: order.shipping_state,
+                  postalCode: order.shipping_postal_code,
+                  items: orderItems,
+                  subtotal: Number(order.subtotal),
+                  deliveryFee: Number(order.delivery_fee),
+                  discountAmount: Number(order.discount_amount),
+                  totalAmount: Number(order.total_amount),
+                }}
+              />
+            </div>
+            {["pending", "confirmed", "processing", "packed"].includes(
+              order.status
+            ) && (
+                <div className="mt-3 flex justify-center">
+                  <CancelOrderButton orderId={order.id} />
+                </div>
+              )}
           </div>
 
           <div className="mt-8 grid gap-6 md:grid-cols-2">

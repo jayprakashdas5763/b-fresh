@@ -5,10 +5,12 @@ import { createClient } from "@/lib/supabase/client";
 
 type WishlistButtonProps = {
     productId: string;
+    onRemoved?: () => void;
 };
 
 export default function WishlistButton({
     productId,
+    onRemoved
 }: WishlistButtonProps) {
     const supabase = createClient();
 
@@ -64,6 +66,8 @@ export default function WishlistButton({
 
             if (!error) {
                 setIsWishlisted(false);
+                onRemoved?.();
+
             } else {
                 console.error("Remove wishlist error:", error.message);
             }

@@ -2,6 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { sendOrderConfirmationEmail } from "@/lib/email";
+import { renderToBuffer } from "@react-pdf/renderer";
+import ReceiptDocument, {
+  type ReceiptData,
+} from "@/components/receipt-document";
 
 type OrderItem = {
   product_name: string;
@@ -46,19 +50,23 @@ export async function createOrderAction(
     throw new Error("Order could not be created.");
   }
 
-  // Fetch the newly created order for the confirmation email.
+  // Fetch the newly created order.
   const { data: order, error: fetchOrderError } = await supabase
     .from("orders")
     .select(
       `
         id,
         order_number,
+        created_at,
+        status,
         payment_method,
+        payment_status,
         subtotal,
         delivery_fee,
         discount_amount,
         total_amount,
         shipping_full_name,
+        shipping_phone,
         shipping_address_line1,
         shipping_address_line2,
         shipping_landmark,
@@ -84,14 +92,36 @@ export async function createOrderAction(
       fetchOrderError
     );
 
-    // The order itself was already successfully created.
     return orderId;
   }
 
-  // Email is deliberately non-blocking.
-  // If Resend fails, the customer's order must remain successful.
   if (user.email) {
     try {
+      const receiptData: ReceiptData = {
+        orderNumber: order.order_number,
+        createdAt: order.created_at,
+        status: order.status,
+        paymentMethod: order.payment_method,
+        paymentStatus: order.payment_status,
+        customerName: order.shipping_full_name,
+        phone: order.shipping_phone,
+        addressLine1: order.shipping_address_line1,
+        addressLine2: order.shipping_address_line2,
+        landmark: order.shipping_landmark,
+        city: order.shipping_city,
+        state: order.shipping_state,
+        postalCode: order.shipping_postal_code,
+        items: (order.order_items ?? []) as OrderItem[],
+        subtotal: Number(order.subtotal),
+        deliveryFee: Number(order.delivery_fee),
+        discountAmount: Number(order.discount_amount),
+        totalAmount: Number(order.total_amount),
+      };
+
+      const pdfBuffer = await renderToBuffer(
+        <ReceiptDocument order={receiptData} />
+      );
+
       await sendOrderConfirmationEmail({
         to: user.email,
         orderNumber: order.order_number,
@@ -108,6 +138,7 @@ export async function createOrderAction(
         city: order.shipping_city,
         state: order.shipping_state,
         postalCode: order.shipping_postal_code,
+        attachment: pdfBuffer,
       });
     } catch (emailError) {
       console.error(

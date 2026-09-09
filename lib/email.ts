@@ -13,6 +13,7 @@ type OrderEmailItem = {
 
 type OrderConfirmationEmailData = {
   to: string;
+  attachment?: Buffer;
   orderNumber: number;
   customerName: string;
   items: OrderEmailItem[];
@@ -30,7 +31,7 @@ type OrderConfirmationEmailData = {
 };
 
 export async function sendOrderConfirmationEmail(
-  data: OrderConfirmationEmailData
+  data: OrderConfirmationEmailData,
 ) {
   const itemsHtml = data.items
     .map(
@@ -48,7 +49,7 @@ export async function sendOrderConfirmationEmail(
             ₹${Number(item.total_price).toFixed(2)}
           </td>
         </tr>
-      `
+      `,
     )
     .join("");
 
@@ -68,6 +69,14 @@ export async function sendOrderConfirmationEmail(
     from: "B-Fresh <onboarding@resend.dev>",
     to: data.to,
     subject: `B-Fresh Order #${data.orderNumber} confirmed`,
+    attachments: data.attachment
+      ? [
+          {
+            filename: `B-Fresh-Order-${data.orderNumber}.pdf`,
+            content: data.attachment,
+          },
+        ]
+      : undefined,
     html: `
       <div style="font-family:Arial,sans-serif;max-width:650px;margin:auto;color:#222;">
         <h1 style="color:#15803d;">B-Fresh</h1>
@@ -123,9 +132,11 @@ export async function sendOrderConfirmationEmail(
 
         <h3>Payment</h3>
         <p>
-          ${data.paymentMethod === "cod"
-            ? "Cash on Delivery"
-            : data.paymentMethod}
+          ${
+            data.paymentMethod === "cod"
+              ? "Cash on Delivery"
+              : data.paymentMethod
+          }
         </p>
 
         <h3>Delivery Address</h3>
