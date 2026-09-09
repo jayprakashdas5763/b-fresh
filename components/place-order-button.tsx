@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createOrderAction } from "@/app/actions/create-order";
 
 type Props = {
   addressId: string;
@@ -14,7 +14,6 @@ export default function PlaceOrderButton({
   customerNote,
 }: Props) {
   const router = useRouter();
-  const supabase = createClient();
 
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState("");
@@ -29,32 +28,16 @@ export default function PlaceOrderButton({
     setError("");
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        router.push("/auth");
-        return;
-      }
-
-      const { data, error: orderError } = await supabase.rpc(
-        "create_order_from_cart",
-        {
-          p_address_id: addressId,
-          p_customer_note: customerNote.trim() || null,
-        }
+      const orderId = await createOrderAction(
+        addressId,
+        customerNote
       );
 
-      if (orderError) {
-        throw new Error(orderError.message);
-      }
-
-      if (!data) {
+      if (!orderId) {
         throw new Error("Order could not be created.");
       }
 
-      router.push(`/orders/${data}`);
+      router.push(`/orders/${orderId}`);
       router.refresh();
     } catch (err) {
       setError(
