@@ -72,23 +72,35 @@ export default function AddressManager() {
     setLoading(true);
     setError("");
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      setAddresses([]);
+      setError("You must be logged in to view your addresses.");
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from("addresses")
       .select(
         `
-          id,
-          label,
-          full_name,
-          phone,
-          address_line1,
-          address_line2,
-          landmark,
-          city,
-          state,
-          postal_code,
-          is_default
-        `
+        id,
+        label,
+        full_name,
+        phone,
+        address_line1,
+        address_line2,
+        landmark,
+        city,
+        state,
+        postal_code,
+        is_default
+      `
       )
+      .eq("user_id", user.id)
       .order("is_default", { ascending: false })
       .order("created_at", { ascending: false });
 

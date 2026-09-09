@@ -13,6 +13,27 @@ export default async function SiteHeader() {
   let isAdmin = false;
   let cartItemCount = 0;
 
+  let unreadNotificationCount = 0;
+
+  type NotificationRow = {
+    is_read: boolean;
+  };
+
+  if (user) {
+    const { data: notifications, error } = await supabase.rpc(
+      "get_my_notifications"
+    );
+
+    if (error) {
+      console.error("Notification count error:", error.message);
+    } else {
+      unreadNotificationCount =
+        (notifications as NotificationRow[] | null | undefined)?.filter(
+          (notification) => !notification.is_read
+        ).length ?? 0;
+    }
+  }
+
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -60,6 +81,7 @@ export default async function SiteHeader() {
             isLoggedIn={!!user}
             isAdmin={isAdmin}
             cartItemCount={cartItemCount}
+            unreadNotificationCount={unreadNotificationCount}
             signOut={signOut}
           />
 

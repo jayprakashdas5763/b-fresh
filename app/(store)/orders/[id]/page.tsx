@@ -86,6 +86,24 @@ export default async function OrderPage({
                 {order.id}
               </span>
             </p>
+            <div className="mt-4">
+              <span
+                className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold ${order.status === "delivered"
+                  ? "bg-green-100 text-green-800"
+                  : order.status === "cancelled"
+                    ? "bg-red-100 text-red-800"
+                    : order.status === "refunded"
+                      ? "bg-purple-100 text-purple-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+              >
+                {order.status === "delivered"
+                  ? "✓ Delivered"
+                  : order.status.replaceAll("_", " ")
+                    .replaceAll("_", " ")
+                    .replace(/\b\w/g, (char: string) => char.toUpperCase())}
+              </span>
+            </div>
           </div>
 
           <div className="mt-8 grid gap-6 md:grid-cols-2">
@@ -120,15 +138,36 @@ export default async function OrderPage({
               </h2>
 
               <p className="mt-3 text-sm text-gray-600">
-                Cash on Delivery
+                {order.payment_method === "cod"
+                  ? "Cash on Delivery"
+                  : order.payment_method}
               </p>
 
-              <div className="mt-3 inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
-                Payment Pending
+              <div
+                className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-medium ${order.payment_status === "paid"
+                  ? "bg-green-100 text-green-800"
+                  : order.payment_status === "refunded"
+                    ? "bg-purple-100 text-purple-800"
+                    : order.payment_status === "failed"
+                      ? "bg-red-100 text-red-800"
+                      : "bg-yellow-100 text-yellow-800"
+                  }`}
+              >
+                {order.payment_status === "paid"
+                  ? "Payment Paid"
+                  : order.payment_status === "refunded"
+                    ? "Payment Refunded"
+                    : order.payment_status === "failed"
+                      ? "Payment Failed"
+                      : "Payment Pending"}
               </div>
 
               <p className="mt-3 text-sm text-gray-600">
-                Pay when your order is delivered.
+                {order.payment_status === "paid"
+                  ? "Payment has been received."
+                  : order.payment_method === "cod"
+                    ? "Pay when your order is delivered."
+                    : "Payment is pending."}
               </p>
             </section>
           </div>

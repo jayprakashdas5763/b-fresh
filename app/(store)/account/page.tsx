@@ -91,6 +91,18 @@ export default async function AccountPage() {
           </Link>
 
           <Link
+            href="/wishlist"
+            className="rounded-xl border border-gray-200 p-4 transition hover:border-green-300 hover:bg-green-50"
+          >
+            <h3 className="font-semibold text-gray-900">
+              Wishlist
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              View your saved products
+            </p>
+          </Link>
+
+          <Link
             href="#addresses"
             className="rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >

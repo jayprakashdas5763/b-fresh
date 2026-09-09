@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AddToCartButton from "@/components/add-to-cart-button";
+import WishlistButton from "@/components/wishlist-button";
 
 type ProductImage = {
     image_url: string;
@@ -34,7 +35,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     const primaryImage = sortedImages[0];
 
     return (
-        <article className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+        <article className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
             <Link href={`/products/${encodeURIComponent(product.slug)}`}>
                 <div className="relative aspect-square overflow-hidden bg-gray-100">
                     {primaryImage ? (
@@ -48,6 +49,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                             <span className="text-5xl">🥛</span>
                         </div>
                     )}
+
                 </div>
 
                 <div className="p-5">
@@ -93,6 +95,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </div>
                 </div>
             </Link>
+
+            <div className="absolute right-3 top-3">
+                <WishlistButton productId={product.id} />
+            </div>
 
             <div className="px-5 pb-5">
                 <AddToCartButton

@@ -8,6 +8,7 @@ type SiteHeaderNavProps = {
     isLoggedIn: boolean;
     isAdmin: boolean;
     cartItemCount: number;
+    unreadNotificationCount: number;
     signOut: () => Promise<void>;
 };
 
@@ -15,6 +16,7 @@ export default function SiteHeaderNav({
     isLoggedIn,
     isAdmin,
     cartItemCount,
+    unreadNotificationCount,
     signOut,
 }: SiteHeaderNavProps) {
     const pathname = usePathname();
@@ -54,6 +56,21 @@ export default function SiteHeaderNav({
 
                         <Link href="/orders" className={linkClass("/orders")}>
                             Orders
+                        </Link>
+
+                        <Link href="/wishlist" className={linkClass("/wishlist")}>
+                            Wishlist
+                        </Link>
+
+                        <Link href="/notifications" className={linkClass("/notifications")}>
+                            Notifications
+                            {unreadNotificationCount > 0 && (
+                                <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">
+                                    {unreadNotificationCount > 99
+                                        ? "99+"
+                                        : unreadNotificationCount}
+                                </span>
+                            )}
                         </Link>
                     </>
                 )}
@@ -152,6 +169,29 @@ export default function SiteHeaderNav({
                                     className={`block ${linkClass("/orders")}`}
                                 >
                                     Orders
+                                </Link>
+
+                                <Link
+                                    href="/wishlist"
+                                    onClick={() => setMenuOpen(false)}
+                                    className={`block ${linkClass("/wishlist")}`}
+                                >
+                                    Wishlist
+                                </Link>
+
+                                <Link
+                                    href="/notifications"
+                                    onClick={() => setMenuOpen(false)}
+                                    className={`block ${linkClass("/notifications")}`}
+                                >
+                                    Notifications
+                                    {unreadNotificationCount > 0 && (
+                                        <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 text-xs font-bold text-white">
+                                            {unreadNotificationCount > 99
+                                                ? "99+"
+                                                : unreadNotificationCount}
+                                        </span>
+                                    )}
                                 </Link>
                             </>
                         )}
