@@ -75,9 +75,17 @@ export default async function SiteHeader() {
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="shrink-0 text-2xl font-bold tracking-tight text-gray-900"
+          className="flex shrink-0 items-center"
+          aria-label="B-Fresh home"
         >
-          B-Fresh
+          <img
+            src="/icon-192.png"
+            alt="B-Fresh"
+            className="h-11 w-11 object-contain"
+          />
+          <span className="ml-2 text-xl font-extrabold tracking-tight text-gray-900">
+            B-Fresh
+          </span>
         </Link>
 
         <div className="flex items-center gap-2">

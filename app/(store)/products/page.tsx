@@ -134,21 +134,21 @@ export default async function ProductsPage({
 
   const productListStructuredData =
     !categorySlug &&
-    !searchQuery &&
-    safePage === 1 &&
-    products &&
-    products.length > 0
+      !searchQuery &&
+      safePage === 1 &&
+      products &&
+      products.length > 0
       ? {
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          name: "B-Fresh Products",
-          itemListElement: products.map((product, index) => ({
-            "@type": "ListItem",
-            position: index + 1,
-            name: product.name,
-            url: `/products/${encodeURIComponent(product.slug)}`,
-          })),
-        }
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "B-Fresh Products",
+        itemListElement: products.map((product, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: product.name,
+          url: `/products/${encodeURIComponent(product.slug)}`,
+        })),
+      }
       : null;
 
   const previousPage = safePage - 1;
@@ -270,11 +270,10 @@ export default async function ProductsPage({
                   ? `/products?q=${encodeURIComponent(searchQuery)}`
                   : "/products"
               }
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
-                !categorySlug
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${!categorySlug
                   ? "bg-green-700 text-white"
                   : "border bg-white text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               All Products
             </Link>
@@ -292,11 +291,10 @@ export default async function ProductsPage({
                 <Link
                   key={category.id}
                   href={`/products?${query.toString()}`}
-                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
-                    category.slug === categorySlug
+                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${category.slug === categorySlug
                       ? "bg-green-700 text-white"
                       : "border bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   {category.name}
                 </Link>
@@ -327,10 +325,11 @@ export default async function ProductsPage({
         {products && products.length > 0 ? (
           <>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}
+                  priority={index === 0}
                 />
               ))}
             </div>
