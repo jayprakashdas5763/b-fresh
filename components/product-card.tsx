@@ -26,6 +26,12 @@ type ProductCardProps = {
   priority?: boolean;
 };
 
+type AddToCartButtonProps = {
+  productId: string;
+  stockQuantity: number;
+  compact?: boolean;
+};
+
 export default function ProductCard({
   product,
   priority = false,
@@ -153,6 +159,7 @@ export default function ProductCard({
         <AddToCartButton
           productId={product.id}
           stockQuantity={product.stock_quantity}
+          compact
         />
       </div>
     </article>

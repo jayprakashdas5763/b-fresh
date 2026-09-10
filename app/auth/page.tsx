@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function AuthPage() {
   const router = useRouter();
+
   const supabase = createClient();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -144,7 +145,18 @@ export default function AuthPage() {
         throw new Error("Unable to sign in. Please try again.");
       }
 
-      router.push("/account");
+      const params = new URLSearchParams(window.location.search);
+      const requestedNext = params.get("next");
+
+      const destination =
+        requestedNext &&
+          requestedNext.startsWith("/") &&
+          !requestedNext.startsWith("//")
+          ? requestedNext
+          : "/account";
+
+      router.push(destination);
+      router.refresh();
       router.refresh();
     } catch (err) {
       setError(

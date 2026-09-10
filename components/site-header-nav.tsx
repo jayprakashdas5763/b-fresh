@@ -199,17 +199,17 @@ export default function SiteHeaderNav({
   const closeMenu = () => setMenuOpen(false);
 
   const desktopLinkClass = (href: string) =>
-    `group inline-flex h-10 items-center gap-2 rounded-full px-3.5 text-sm font-semibold transition ${
+    `group inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold transition ${
       isActive(href)
-        ? "bg-green-50 text-green-800"
-        : "text-gray-600 hover:bg-gray-50 hover:text-gray-950"
+        ? "bg-green-100 text-green-800"
+        : "text-gray-600 hover:bg-green-50 hover:text-gray-950"
     }`;
 
   const mobileLinkClass = (href: string) =>
-    `flex min-h-12 items-center justify-between rounded-xl px-4 text-sm font-semibold transition ${
+    `flex min-h-12 items-center justify-between rounded-2xl border px-4 text-sm font-bold transition ${
       isActive(href)
-        ? "bg-green-50 text-green-800"
-        : "text-gray-700 hover:bg-gray-50 hover:text-gray-950"
+        ? "border-green-200 bg-green-100 text-green-800"
+        : "border-transparent text-gray-700 hover:border-green-100 hover:bg-green-50"
     }`;
 
   const navItems = [
@@ -227,9 +227,7 @@ export default function SiteHeaderNav({
 
   return (
     <>
-      {/* =========================================================
-          DESKTOP
-      ========================================================= */}
+      {/* Desktop */}
       <nav
         aria-label="Main navigation"
         className="hidden items-center gap-1 lg:flex"
@@ -297,8 +295,8 @@ export default function SiteHeaderNav({
             href="/admin"
             className={`ml-1 inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-bold transition ${
               pathname === "/admin" || pathname.startsWith("/admin/")
-                ? "bg-green-800 text-white shadow-md shadow-green-900/15"
-                : "bg-green-700 text-white shadow-md shadow-green-800/10 hover:-translate-y-0.5 hover:bg-green-800"
+                ? "bg-green-800 text-white shadow-md"
+                : "bg-green-700 text-white shadow-md hover:-translate-y-0.5 hover:bg-green-800"
             }`}
           >
             <ShieldIcon />
@@ -306,13 +304,13 @@ export default function SiteHeaderNav({
           </Link>
         )}
 
-        <div className="mx-1 h-7 w-px bg-gray-200" />
+        <div className="mx-1 h-7 w-px bg-green-100" />
 
         {isLoggedIn ? (
           <form action={signOut}>
             <button
               type="submit"
-              className="inline-flex h-10 items-center rounded-full px-3.5 text-sm font-semibold text-gray-600 transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+              className="inline-flex h-10 items-center rounded-full px-3 text-sm font-semibold text-gray-600 transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
             >
               Logout
             </button>
@@ -320,13 +318,13 @@ export default function SiteHeaderNav({
         ) : (
           <Link
             href="/auth"
-            className="inline-flex h-10 items-center rounded-full border border-gray-200 bg-white px-4 text-sm font-bold text-gray-800 shadow-sm transition hover:border-green-200 hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+            className="inline-flex h-10 items-center rounded-full border border-green-200 bg-[#fffdf7] px-4 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
           >
             Sign in
           </Link>
         )}
 
-        {/* Cart */}
+        {/* Desktop cart */}
         <Link
           href="/cart"
           aria-label={`Shopping cart${
@@ -334,11 +332,12 @@ export default function SiteHeaderNav({
           }`}
           className={`group relative ml-1 inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3.5 text-sm font-bold transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${
             isActive("/cart")
-              ? "bg-green-800 text-white shadow-lg shadow-green-900/15"
-              : "bg-gray-950 text-white shadow-lg shadow-gray-900/10 hover:-translate-y-0.5 hover:bg-gray-800"
+              ? "bg-green-800 text-white shadow-lg"
+              : "bg-gray-950 text-white shadow-lg hover:-translate-y-0.5 hover:bg-gray-800"
           }`}
         >
           <CartIcon />
+
           <span className="hidden xl:inline">Cart</span>
 
           {cartItemCount > 0 && (
@@ -346,7 +345,7 @@ export default function SiteHeaderNav({
               className={`flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${
                 isActive("/cart")
                   ? "bg-white text-green-800"
-                  : "bg-green-400 text-green-950"
+                  : "bg-lime-300 text-green-950"
               }`}
             >
               {cartItemCount > 99 ? "99+" : cartItemCount}
@@ -355,17 +354,14 @@ export default function SiteHeaderNav({
         </Link>
       </nav>
 
-      {/* =========================================================
-          TABLET / MOBILE CONTROLS
-      ========================================================= */}
+      {/* Tablet / Mobile */}
       <div className="flex items-center gap-2 lg:hidden">
-        {/* Compact cart */}
         <Link
           href="/cart"
           aria-label={`Shopping cart${
             cartItemCount > 0 ? `, ${cartItemCount} items` : ""
           }`}
-          className={`relative flex h-11 w-11 items-center justify-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${
+          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${
             isActive("/cart")
               ? "bg-green-800 text-white"
               : "bg-gray-950 text-white"
@@ -374,7 +370,7 @@ export default function SiteHeaderNav({
           <CartIcon />
 
           {cartItemCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex min-w-[19px] items-center justify-center rounded-full bg-green-400 px-1 text-[9px] font-black leading-[19px] text-green-950">
+            <span className="absolute -right-1 -top-1 flex min-w-[18px] items-center justify-center rounded-full bg-lime-300 px-1 text-[9px] font-black leading-[18px] text-green-950">
               {cartItemCount > 99 ? "99+" : cartItemCount}
             </span>
           )}
@@ -382,22 +378,50 @@ export default function SiteHeaderNav({
 
         <button
           type="button"
-          aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+          aria-label={
+            menuOpen ? "Close navigation menu" : "Open navigation menu"
+          }
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((current) => !current)}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-800 shadow-sm transition hover:border-green-200 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+          className={`flex h-10 w-10 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${
+            menuOpen
+              ? "border-green-200 bg-green-100 text-green-800"
+              : "border-green-100 bg-[#fffdf7] text-gray-800 shadow-sm"
+          }`}
         >
           <MenuIcon open={menuOpen} />
         </button>
       </div>
 
-      {/* =========================================================
-          MOBILE MENU
-      ========================================================= */}
+      {/* Mobile menu */}
       {menuOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 border-t border-gray-100 bg-white shadow-2xl shadow-gray-900/10 lg:hidden">
+        <div className="absolute left-0 right-0 top-full z-50 border-t border-green-100 bg-[#f7fbf2] shadow-2xl shadow-green-900/10 lg:hidden">
           <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
-            <nav aria-label="Mobile navigation" className="space-y-1.5">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">
+                  B-Fresh
+                </p>
+
+                <p className="mt-0.5 text-sm font-bold text-gray-900">
+                  Fresh • Local • Simple
+                </p>
+              </div>
+
+              {isLoggedIn && unreadNotificationCount > 0 && (
+                <span className="rounded-full bg-red-50 px-2.5 py-1.5 text-[10px] font-black text-red-600">
+                  {unreadNotificationCount > 99
+                    ? "99+"
+                    : unreadNotificationCount}{" "}
+                  new
+                </span>
+              )}
+            </div>
+
+            <nav
+              aria-label="Mobile navigation"
+              className="space-y-2"
+            >
               <Link
                 href="/"
                 onClick={closeMenu}
@@ -419,7 +443,7 @@ export default function SiteHeaderNav({
                   Products
                 </span>
 
-                <span className="text-xs text-gray-400">
+                <span className="text-xs font-semibold text-gray-400">
                   Browse
                 </span>
               </Link>
@@ -484,8 +508,7 @@ export default function SiteHeaderNav({
                       <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600">
                         {unreadNotificationCount > 99
                           ? "99+"
-                          : unreadNotificationCount}{" "}
-                        new
+                          : unreadNotificationCount}
                       </span>
                     )}
                   </Link>
@@ -513,10 +536,10 @@ export default function SiteHeaderNav({
                 <Link
                   href="/admin"
                   onClick={closeMenu}
-                  className={`flex min-h-12 items-center gap-3 rounded-xl px-4 text-sm font-bold transition ${
+                  className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-bold text-white transition ${
                     pathname === "/admin" || pathname.startsWith("/admin/")
-                      ? "bg-green-800 text-white"
-                      : "bg-green-700 text-white hover:bg-green-800"
+                      ? "bg-green-800"
+                      : "bg-green-700 hover:bg-green-800"
                   }`}
                 >
                   <ShieldIcon />
@@ -524,13 +547,13 @@ export default function SiteHeaderNav({
                 </Link>
               )}
 
-              <div className="my-3 h-px bg-gray-100" />
+              <div className="my-3 h-px bg-green-100" />
 
               {isLoggedIn ? (
                 <form action={signOut}>
                   <button
                     type="submit"
-                    className="flex min-h-12 w-full items-center rounded-xl px-4 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="flex min-h-12 w-full items-center rounded-2xl border border-red-100 bg-white px-4 text-left text-sm font-bold text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
                   >
                     Logout
                   </button>
@@ -539,15 +562,15 @@ export default function SiteHeaderNav({
                 <Link
                   href="/auth"
                   onClick={closeMenu}
-                  className="flex min-h-12 items-center justify-center rounded-xl bg-green-700 px-4 text-sm font-bold text-white shadow-lg shadow-green-800/10 transition hover:bg-green-800"
+                  className="flex min-h-12 items-center justify-center rounded-2xl bg-green-700 px-4 text-sm font-bold text-white shadow-lg shadow-green-800/10 transition hover:bg-green-800"
                 >
                   Sign in / Create account
                 </Link>
               )}
             </nav>
 
-            <div className="mt-4 rounded-2xl bg-green-50 px-4 py-3">
-              <p className="text-xs font-semibold text-green-900">
+            <div className="mt-4 rounded-2xl border border-green-100 bg-[#fffdf7] px-4 py-3">
+              <p className="text-xs font-semibold leading-5 text-green-900">
                 Fresh food. Everyday essentials. Delivered locally.
               </p>
             </div>

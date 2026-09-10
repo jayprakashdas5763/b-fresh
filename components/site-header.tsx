@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import SiteHeaderNav from "@/components/site-header-nav";
-import Image from "next/image";
 
 export default async function SiteHeader() {
   const supabase = await createClient();
@@ -13,7 +13,6 @@ export default async function SiteHeader() {
 
   let isAdmin = false;
   let cartItemCount = 0;
-
   let unreadNotificationCount = 0;
 
   type NotificationRow = {
@@ -62,43 +61,48 @@ export default async function SiteHeader() {
       );
     }
   }
+
   async function signOut() {
     "use server";
 
     const supabase = await createClient();
+
     await supabase.auth.signOut();
 
     redirect("/");
   }
 
   return (
-<header className="sticky top-0 z-50 border-b border-green-100 bg-[#f7fbf2]/95 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex min-h-[4.25rem] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b border-green-100 bg-[#f7fbf2]/95 shadow-sm backdrop-blur-md">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:min-h-[4.25rem] sm:gap-4 sm:px-6 lg:px-8">
+        {/* Brand */}
         <Link
           href="/"
-          className="group flex shrink-0 items-center rounded-2xl p-1.5 -ml-1.5 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
           aria-label="B-Fresh home"
+          className="-ml-1 flex shrink-0 items-center rounded-2xl p-1 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:ml-0 sm:p-1.5"
         >
           <Image
             src="/icon-192.png"
             alt="B-Fresh"
-            width={44}
-            height={44}
+            width={42}
+            height={42}
             priority
-            className="rounded-xl transition duration-300 group-hover:scale-105"
+            className="h-10 w-10 rounded-xl transition duration-300 group-hover:scale-105 sm:h-11 sm:w-11"
           />
 
-          <div className="ml-2.5">
-            <span className="block text-[1.25rem] font-black tracking-[-0.03em] text-gray-950">
+          <div className="ml-2 sm:ml-2.5">
+            <span className="block text-[1.15rem] font-black tracking-[-0.03em] text-gray-950 sm:text-[1.25rem]">
               B-Fresh
             </span>
+
             <span className="hidden text-[9px] font-bold uppercase tracking-[0.15em] text-green-700 sm:block">
               Fresh • Local • Simple
             </span>
           </div>
         </Link>
 
-        <div className="flex items-center gap-2">
+        {/* Navigation */}
+        <div className="min-w-0">
           <SiteHeaderNav
             isLoggedIn={!!user}
             isAdmin={isAdmin}
@@ -106,7 +110,6 @@ export default async function SiteHeader() {
             unreadNotificationCount={unreadNotificationCount}
             signOut={signOut}
           />
-
         </div>
       </div>
     </header>

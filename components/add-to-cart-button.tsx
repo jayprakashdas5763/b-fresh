@@ -7,11 +7,65 @@ import { createClient } from "@/lib/supabase/client";
 type AddToCartButtonProps = {
   productId: string;
   stockQuantity: number;
+  compact?: boolean;
 };
+
+function MinusIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      <path d="M4 9.25a.75.75 0 0 1 .75-.75h10.5a.75.75 0 1 1 0 1.5H4.75A.75.75 0 0 1 4 9.25Z" />
+    </svg>
+  );
+}
+
+function PlusIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      className="h-3.5 w-3.5"
+      aria-hidden="true"
+    >
+      <path d="M9.25 4.75a.75.75 0 1 1 1.5 0v3.5h3.5a.75.75 0 1 1 0 1.5h-3.5v3.5a.75.75 0 1 1-1.5 0v-3.5h-3.5a.75.75 0 1 1 0-1.5h3.5v-3.5Z" />
+    </svg>
+  );
+}
+
+function CartIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <circle cx="9" cy="20" r="1.5" />
+      <circle cx="18" cy="20" r="1.5" />
+      <path d="M3 4h2l2.3 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 1.9-1.4L21 8H6" />
+    </svg>
+  );
+}
+
+function Spinner() {
+  return (
+    <span
+      className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+      aria-hidden="true"
+    />
+  );
+}
 
 export default function AddToCartButton({
   productId,
   stockQuantity,
+  compact = false,
 }: AddToCartButtonProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -23,6 +77,10 @@ export default function AddToCartButton({
   const isOutOfStock = stockQuantity <= 0;
 
   async function addToCart() {
+    if (loading || isOutOfStock) {
+      return;
+    }
+
     setLoading(true);
     setMessage("");
 
@@ -32,7 +90,9 @@ export default function AddToCartButton({
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/auth");
+        router.push(
+          `/auth?next=${encodeURIComponent(window.location.pathname)}`
+        );
         return;
       }
 
@@ -49,13 +109,14 @@ export default function AddToCartButton({
 
       // Create a cart if the customer doesn't have one.
       if (!cart) {
-        const { data: newCart, error: createCartError } = await supabase
-          .from("carts")
-          .insert({
-            user_id: user.id,
-          })
-          .select("id")
-          .single();
+        const { data: newCart, error: createCartError } =
+          await supabase
+            .from("carts")
+            .insert({
+              user_id: user.id,
+            })
+            .select("id")
+            .single();
 
         if (createCartError) {
           throw new Error(createCartError.message);
@@ -65,12 +126,13 @@ export default function AddToCartButton({
       }
 
       // Check whether the product is already in the cart.
-      const { data: existingItem, error: itemError } = await supabase
-        .from("cart_items")
-        .select("id, quantity")
-        .eq("cart_id", cart.id)
-        .eq("product_id", productId)
-        .maybeSingle();
+      const { data: existingItem, error: itemError } =
+        await supabase
+          .from("cart_items")
+          .select("id, quantity")
+          .eq("cart_id", cart.id)
+          .eq("product_id", productId)
+          .maybeSingle();
 
       if (itemError) {
         throw new Error(itemError.message);
@@ -82,8 +144,7 @@ export default function AddToCartButton({
 
       if (newQuantity > stockQuantity) {
         throw new Error(
-          `Only ${stockQuantity} item${
-            stockQuantity === 1 ? "" : "s"
+          `Only ${stockQuantity} item${stockQuantity === 1 ? "" : "s"
           } available.`
         );
       }
@@ -113,10 +174,15 @@ export default function AddToCartButton({
         }
       }
 
-      setMessage("Added to cart.");
+      setMessage(
+        quantity === 1
+          ? "Added to cart."
+          : `${quantity} items added to cart.`
+      );
+
       router.refresh();
     } catch (error) {
-      console.error(error);
+      console.error("Add to cart error:", error);
 
       setMessage(
         error instanceof Error
@@ -130,66 +196,142 @@ export default function AddToCartButton({
 
   if (isOutOfStock) {
     return (
-      <span className="inline-block rounded-lg bg-gray-100 px-4 py-3 text-sm font-medium text-gray-500">
-        Out of stock
-      </span>
-    );
-  }
+      <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+        <p className="text-sm font-bold text-red-700">
+          Out of stock
+        </p>
 
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-center">
-        <button
-          type="button"
-          onClick={() =>
-            setQuantity((current) => Math.max(1, current - 1))
-          }
-          disabled={quantity <= 1 || loading}
-          className="h-11 w-11 rounded-l-lg border border-gray-300 bg-white text-lg disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Decrease quantity"
-        >
-          −
-        </button>
-
-        <div className="flex h-11 w-14 items-center justify-center border-y border-gray-300 bg-white font-medium">
-          {quantity}
-        </div>
-
-        <button
-          type="button"
-          onClick={() =>
-            setQuantity((current) =>
-              Math.min(stockQuantity, current + 1)
-            )
-          }
-          disabled={quantity >= stockQuantity || loading}
-          className="h-11 w-11 rounded-r-lg border border-gray-300 bg-white text-lg disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Increase quantity"
-        >
-          +
-        </button>
+        <p className="mt-0.5 text-xs text-red-600">
+          This product is currently unavailable.
+        </p>
       </div>
-
+    );
+  } if (compact) {
+    return (
       <button
         type="button"
         onClick={addToCart}
         disabled={loading}
-        className="rounded-xl bg-green-700 px-6 py-4 font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+        aria-busy={loading}
+        className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-3 text-xs font-black text-white shadow-sm transition hover:bg-green-800 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-green-300 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {loading ? "Adding..." : "Add to Cart"}
+        {loading ? (
+          <>
+            <Spinner />
+            <span>Adding...</span>
+          </>
+        ) : (
+          <>
+            <CartIcon />
+            <span>Add to Cart</span>
+          </>
+        )}
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Quantity selector */}
+      <div>
+        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-500">
+          Quantity
+        </p>
+
+        <div className="inline-flex items-center overflow-hidden rounded-2xl border border-green-100 bg-green-50/60">
+          <button
+            type="button"
+            onClick={() =>
+              setQuantity((current) => Math.max(1, current - 1))
+            }
+            disabled={quantity <= 1 || loading}
+            className="flex h-10 w-10 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30"
+            aria-label="Decrease quantity"
+          >
+            <MinusIcon />
+          </button>
+
+          <span
+            aria-live="polite"
+            className="flex h-10 min-w-11 items-center justify-center border-x border-green-100 bg-white px-3 text-sm font-black text-gray-950"
+          >
+            {quantity}
+          </span>
+
+          <button
+            type="button"
+            onClick={() =>
+              setQuantity((current) =>
+                Math.min(stockQuantity, current + 1)
+              )
+            }
+            disabled={quantity >= stockQuantity || loading}
+            className="flex h-10 w-10 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30"
+            aria-label="Increase quantity"
+          >
+            <PlusIcon />
+          </button>
+        </div>
+
+        {stockQuantity <= 10 && (
+          <p className="mt-1.5 text-[11px] font-semibold text-amber-600">
+            Only {stockQuantity} left in stock.
+          </p>
+        )}
+      </div>
+
+      {/* Add to cart */}
+      <button
+        type="button"
+        onClick={addToCart}
+        disabled={loading}
+        aria-busy={loading}
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-green-700 px-5 text-sm font-black text-white shadow-lg shadow-green-800/10 transition duration-300 hover:-translate-y-0.5 hover:bg-green-800 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-200 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
+      >
+        {loading ? (
+          <>
+            <Spinner />
+            <span>Adding to cart...</span>
+          </>
+        ) : (
+          <>
+            <CartIcon />
+            <span>
+              {quantity > 1
+                ? `Add ${quantity} to Cart`
+                : "Add to Cart"}
+            </span>
+          </>
+        )}
       </button>
 
+      {/* Feedback */}
       {message && (
-        <p
-          className={`text-sm ${
-            message === "Added to cart."
-              ? "text-green-700"
-              : "text-red-600"
-          }`}
+        <div
+          role={message.includes("Added") ? "status" : "alert"}
+          className={`rounded-2xl border px-4 py-3 text-sm font-medium ${message.includes("Added")
+            ? "border-green-100 bg-green-50 text-green-800"
+            : "border-red-100 bg-red-50 text-red-700"
+            }`}
         >
-          {message}
-        </p>
+          <div className="flex items-start gap-2.5">
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black ${message.includes("Added")
+                ? "bg-green-600 text-white"
+                : "bg-red-600 text-white"
+                }`}
+            >
+              {message.includes("Added") ? "✓" : "!"}
+            </span>
+
+            <span>{message}</span>
+          </div>
+        </div>
       )}
+
+      <p className="text-center text-[10px] leading-4 text-gray-400">
+        Maximum quantity is limited by available stock.
+      </p>
     </div>
   );
 }

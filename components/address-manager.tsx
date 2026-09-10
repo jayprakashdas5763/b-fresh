@@ -29,12 +29,63 @@ const emptyForm = {
   postalCode: "",
 };
 
+function LocationIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path d="M20 10.2c0 5.2-8 10.8-8 10.8S4 15.4 4 10.2a8 8 0 1 1 16 0Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
+function HomeIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path d="m3 10 9-7 9 7" />
+      <path d="M5 9v11h14V9" />
+      <path d="M9 20v-6h6v6" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      className="h-5 w-5"
+      aria-hidden="true"
+    >
+      <path d="M7 3h3l1.5 4-2 1.5a14 14 0 0 0 6 6l1.5-2L21 14v3c0 1.1-.9 2-2 2C10.7 19 5 13.3 5 5a2 2 0 0 1 2-2Z" />
+    </svg>
+  );
+}
+
 export default function AddressManager() {
   const supabase = createClient();
 
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [updatingDefault, setUpdatingDefault] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -51,9 +102,12 @@ export default function AddressManager() {
   const [landmark, setLandmark] = useState(emptyForm.landmark);
   const [city, setCity] = useState(emptyForm.city);
   const [state, setState] = useState(emptyForm.state);
-  const [postalCode, setPostalCode] = useState(
-    emptyForm.postalCode
-  );
+  const [postalCode, setPostalCode] = useState(emptyForm.postalCode);
+
+  function clearFeedback() {
+    setMessage("");
+    setError("");
+  }
 
   function resetForm() {
     setLabel("Home");
@@ -121,7 +175,7 @@ export default function AddressManager() {
     setEditingId(address.id);
     setLabel(address.label);
     setFullName(address.full_name);
-    setPhone(address.phone);
+    setPhone(address.phone.replace(/\D/g, "").slice(0, 10));
     setAddressLine1(address.address_line1);
     setAddressLine2(address.address_line2 ?? "");
     setLandmark(address.landmark ?? "");
@@ -129,31 +183,29 @@ export default function AddressManager() {
     setState(address.state);
     setPostalCode(address.postal_code);
 
-    setMessage("");
-    setError("");
+    clearFeedback();
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    document
+      .getElementById("address-form")
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setMessage("");
-    setError("");
+    clearFeedback();
 
     const cleanFullName = fullName.trim();
-    const cleanPhone = phone.trim();
+    const cleanPhone = phone.replace(/\D/g, "");
     const cleanAddressLine1 = addressLine1.trim();
     const cleanAddressLine2 = addressLine2.trim();
     const cleanLandmark = landmark.trim();
     const cleanCity = city.trim();
     const cleanState = state.trim() || "Odisha";
-    const cleanPostalCode = postalCode.trim();
+    const cleanPostalCode = postalCode.replace(/\D/g, "");
 
     if (
       !cleanFullName ||
@@ -167,38 +219,12 @@ export default function AddressManager() {
     }
 
     if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
-      setError("Please enter a valid Indian mobile number.");
+      setError("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
 
     if (!/^\d{6}$/.test(cleanPostalCode)) {
       setError("Please enter a valid 6-digit PIN code.");
-      return;
-    }
-
-    const { data: deliveryZones, error: deliveryZoneError } =
-      await supabase
-        .from("delivery_zones")
-        .select("postal_codes")
-        .eq("is_active", true);
-
-    if (deliveryZoneError) {
-      setError("Unable to verify delivery availability. Please try again.");
-      return;
-    }
-
-    const isDeliverable =
-      deliveryZones?.some((zone) =>
-        zone.postal_codes
-          .split(",")
-          .map((pin: string) => pin.trim())
-          .includes(cleanPostalCode)
-      ) ?? false;
-
-    if (!isDeliverable) {
-      setError(
-        "Sorry, B-Fresh does not currently deliver to this PIN code."
-      );
       return;
     }
 
@@ -210,8 +236,35 @@ export default function AddressManager() {
       } = await supabase.auth.getUser();
 
       if (!user) {
+        throw new Error("You must be logged in to manage addresses.");
+      }
+
+      // Verify that B-Fresh delivers to this PIN code.
+      const {
+        data: deliveryZones,
+        error: deliveryZoneError,
+      } = await supabase
+        .from("delivery_zones")
+        .select("postal_codes")
+        .eq("is_active", true);
+
+      if (deliveryZoneError) {
         throw new Error(
-          "You must be logged in to manage addresses."
+          "Unable to verify delivery availability. Please try again."
+        );
+      }
+
+      const isDeliverable =
+        deliveryZones?.some((zone) =>
+          zone.postal_codes
+            .split(",")
+            .map((pin: string) => pin.trim())
+            .includes(cleanPostalCode)
+        ) ?? false;
+
+      if (!isDeliverable) {
+        throw new Error(
+          "Sorry, B-Fresh does not currently deliver to this PIN code."
         );
       }
 
@@ -278,48 +331,53 @@ export default function AddressManager() {
   }
 
   async function setDefaultAddress(id: string) {
-    setMessage("");
-    setError("");
+    clearFeedback();
+    setUpdatingDefault(id);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      setError("You must be logged in.");
-      return;
+      if (!user) {
+        throw new Error("You must be logged in.");
+      }
+
+      const { error: resetError } = await supabase
+        .from("addresses")
+        .update({ is_default: false })
+        .eq("user_id", user.id)
+        .neq("id", id);
+
+      if (resetError) {
+        throw new Error(resetError.message);
+      }
+
+      const { error: updateError } = await supabase
+        .from("addresses")
+        .update({ is_default: true })
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
+      setMessage("Default address updated.");
+      await loadAddresses();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to update the default address."
+      );
+    } finally {
+      setUpdatingDefault(null);
     }
-
-    const { error: resetError } = await supabase
-      .from("addresses")
-      .update({ is_default: false })
-      .eq("user_id", user.id)
-      .neq("id", id);
-
-    if (resetError) {
-      setError(resetError.message);
-      return;
-    }
-
-    const { error } = await supabase
-      .from("addresses")
-      .update({ is_default: true })
-      .eq("id", id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      setError(error.message);
-      return;
-    }
-
-    setMessage("Default address updated.");
-    await loadAddresses();
   }
 
   async function deleteAddress(id: string) {
-    const address = addresses.find(
-      (item) => item.id === id
-    );
+    const address = addresses.find((item) => item.id === id);
 
     if (!address) return;
 
@@ -336,268 +394,492 @@ export default function AddressManager() {
 
     if (!confirmed) return;
 
-    setMessage("");
-    setError("");
+    clearFeedback();
+    setDeletingId(id);
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (!user) {
-      setError("You must be logged in.");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("addresses")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", user.id);
-
-    if (error) {
-      setError(error.message);
-      return;
-    }
-
-    if (address.is_default) {
-      const remainingAddress = addresses.find(
-        (item) => item.id !== id
-      );
-
-      if (remainingAddress) {
-        await supabase
-          .from("addresses")
-          .update({ is_default: true })
-          .eq("id", remainingAddress.id)
-          .eq("user_id", user.id);
+      if (!user) {
+        throw new Error("You must be logged in.");
       }
-    }
 
-    setMessage("Address deleted.");
-    await loadAddresses();
+      const { error: deleteError } = await supabase
+        .from("addresses")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (deleteError) {
+        throw new Error(deleteError.message);
+      }
+
+      // Keep one address as default when the deleted address was default.
+      if (address.is_default) {
+        const remainingAddress = addresses.find(
+          (item) => item.id !== id
+        );
+
+        if (remainingAddress) {
+          await supabase
+            .from("addresses")
+            .update({ is_default: true })
+            .eq("id", remainingAddress.id)
+            .eq("user_id", user.id);
+        }
+      }
+
+      setMessage("Address deleted.");
+      await loadAddresses();
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to delete address."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function handlePhoneChange(value: string) {
+    setPhone(value.replace(/\D/g, "").slice(0, 10));
+  }
+
+  function handlePostalCodeChange(value: string) {
+    setPostalCode(value.replace(/\D/g, "").slice(0, 6));
   }
 
   return (
     <section className="mt-10">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">
-          Delivery Addresses
-        </h2>
+      {/* Section intro */}
+      <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-xs font-bold text-green-800">
+            <LocationIcon />
+            Delivery
+          </div>
 
-        <p className="mt-2 text-gray-600">
-          Save your delivery addresses for faster checkout.
-        </p>
+          <h2 className="mt-3 text-2xl font-black tracking-tight text-gray-950 sm:text-3xl">
+            Your addresses
+          </h2>
+
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-gray-500">
+            Save your delivery addresses for faster and easier checkout.
+          </p>
+        </div>
+
+        {addresses.length > 0 && (
+          <div className="rounded-2xl bg-green-50 px-4 py-2.5 text-xs font-semibold text-green-800">
+            {addresses.length}{" "}
+            {addresses.length === 1 ? "saved address" : "saved addresses"}
+          </div>
+        )}
       </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[380px_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[380px_minmax(0,1fr)]">
         {/* Address form */}
-        <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-lg font-semibold text-gray-900">
-              {editingId ? "Edit Address" : "Add Address"}
-            </h3>
+        <div
+          id="address-form"
+          className="scroll-mt-28 overflow-hidden rounded-3xl border border-green-100 bg-[#fffdf7] shadow-sm"
+        >
+          <div className="border-b border-green-100 bg-gradient-to-br from-green-50 to-lime-50 px-5 py-5 sm:px-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">
+                  {editingId ? "Update address" : "New address"}
+                </p>
 
-            {editingId && (
-              <button
-                type="button"
-                onClick={resetForm}
-                className="text-sm font-medium text-gray-500 hover:text-gray-900"
-              >
-                Cancel
-              </button>
-            )}
+                <h3 className="mt-1 text-xl font-black text-gray-950">
+                  {editingId ? "Edit Address" : "Add Address"}
+                </h3>
+              </div>
+
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  disabled={saving}
+                  className="rounded-xl px-3 py-2 text-xs font-bold text-gray-600 transition hover:bg-white hover:text-gray-900 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </div>
 
           <form
             onSubmit={handleSubmit}
-            className="mt-5 space-y-4"
+            className="space-y-4 p-5 sm:p-6"
           >
-            <select
-              value={label}
-              onChange={(event) =>
-                setLabel(event.target.value)
-              }
-              className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-            >
-              <option>Home</option>
-              <option>Work</option>
-              <option>Other</option>
-            </select>
+            {/* Label */}
+            <div>
+              <label
+                htmlFor="addressLabel"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+              >
+                Address Type
+              </label>
 
-            <input
-              type="text"
-              placeholder="Full name"
-              value={fullName}
-              onChange={(event) =>
-                setFullName(event.target.value)
-              }
-              maxLength={100}
-              required
-              className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-            />
+              <select
+                id="addressLabel"
+                value={label}
+                onChange={(event) => setLabel(event.target.value)}
+                disabled={saving}
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option>Home</option>
+                <option>Work</option>
+                <option>Other</option>
+              </select>
+            </div>
 
-            <input
-              type="tel"
-              inputMode="numeric"
-              placeholder="10-digit phone number"
-              value={phone}
-              onChange={(event) =>
-                setPhone(
-                  event.target.value
-                    .replace(/\D/g, "")
-                    .slice(0, 10)
-                )
-              }
-              maxLength={10}
-              required
-              className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-            />
-
-            <input
-              type="text"
-              placeholder="Address line 1"
-              value={addressLine1}
-              onChange={(event) =>
-                setAddressLine1(event.target.value)
-              }
-              maxLength={200}
-              required
-              className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-            />
-
-            <input
-              type="text"
-              placeholder="Address line 2 (optional)"
-              value={addressLine2}
-              onChange={(event) =>
-                setAddressLine2(event.target.value)
-              }
-              maxLength={200}
-              className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-            />
-
-            <input
-              type="text"
-              placeholder="Landmark (optional)"
-              value={landmark}
-              onChange={(event) =>
-                setLandmark(event.target.value)
-              }
-              maxLength={150}
-              className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-            />
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <input
-                type="text"
-                placeholder="City"
-                value={city}
-                onChange={(event) =>
-                  setCity(event.target.value)
-                }
-                maxLength={100}
-                required
-                className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-              />
+            {/* Full name */}
+            <div>
+              <label
+                htmlFor="addressFullName"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+              >
+                Full Name
+              </label>
 
               <input
+                id="addressFullName"
                 type="text"
-                placeholder="State"
-                value={state}
-                onChange={(event) =>
-                  setState(event.target.value)
-                }
+                placeholder="Name for delivery"
+                value={fullName}
+                onChange={(event) => setFullName(event.target.value)}
                 maxLength={100}
                 required
-                className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
+                disabled={saving}
+                autoComplete="name"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="6-digit PIN code"
-              value={postalCode}
-              onChange={(event) =>
-                setPostalCode(
-                  event.target.value
-                    .replace(/\D/g, "")
-                    .slice(0, 6)
-                )
-              }
-              required
-              className="w-full rounded-lg border border-gray-300 p-3 text-gray-900"
-            />
+            {/* Phone */}
+            <div>
+              <label
+                htmlFor="addressPhone"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+              >
+                Phone Number
+              </label>
 
+              <div className="flex overflow-hidden rounded-2xl border border-green-100 bg-white transition hover:border-green-200 focus-within:border-green-500 focus-within:ring-4 focus-within:ring-green-100">
+                <div className="flex items-center gap-1.5 border-r border-green-100 bg-green-50 px-3 text-sm font-bold text-green-800">
+                  <PhoneIcon />
+                  +91
+                </div>
+
+                <input
+                  id="addressPhone"
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="9876543210"
+                  value={phone}
+                  onChange={(event) =>
+                    handlePhoneChange(event.target.value)
+                  }
+                  maxLength={10}
+                  required
+                  disabled={saving}
+                  autoComplete="tel"
+                  className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+                />
+              </div>
+            </div>
+
+            {/* Address line 1 */}
+            <div>
+              <label
+                htmlFor="addressLine1"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+              >
+                Address Line 1
+              </label>
+
+              <input
+                id="addressLine1"
+                type="text"
+                placeholder="House / Flat / Street"
+                value={addressLine1}
+                onChange={(event) =>
+                  setAddressLine1(event.target.value)
+                }
+                maxLength={200}
+                required
+                disabled={saving}
+                autoComplete="street-address"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+
+            {/* Address line 2 */}
+            <div>
+              <label
+                htmlFor="addressLine2"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+              >
+                Address Line 2{" "}
+                <span className="font-normal normal-case text-gray-400">
+                  (optional)
+                </span>
+              </label>
+
+              <input
+                id="addressLine2"
+                type="text"
+                placeholder="Apartment, area, locality"
+                value={addressLine2}
+                onChange={(event) =>
+                  setAddressLine2(event.target.value)
+                }
+                maxLength={200}
+                disabled={saving}
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+
+            {/* Landmark */}
+            <div>
+              <label
+                htmlFor="landmark"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+              >
+                Landmark{" "}
+                <span className="font-normal normal-case text-gray-400">
+                  (optional)
+                </span>
+              </label>
+
+              <input
+                id="landmark"
+                type="text"
+                placeholder="Nearby landmark"
+                value={landmark}
+                onChange={(event) =>
+                  setLandmark(event.target.value)
+                }
+                maxLength={150}
+                disabled={saving}
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+
+            {/* City / State */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="city"
+                  className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                >
+                  City
+                </label>
+
+                <input
+                  id="city"
+                  type="text"
+                  placeholder="City"
+                  value={city}
+                  onChange={(event) => setCity(event.target.value)}
+                  maxLength={100}
+                  required
+                  disabled={saving}
+                  autoComplete="address-level2"
+                  className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="state"
+                  className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                >
+                  State
+                </label>
+
+                <input
+                  id="state"
+                  type="text"
+                  placeholder="State"
+                  value={state}
+                  onChange={(event) => setState(event.target.value)}
+                  maxLength={100}
+                  required
+                  disabled={saving}
+                  autoComplete="address-level1"
+                  className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                />
+              </div>
+            </div>
+
+            {/* PIN */}
+            <div>
+              <label
+                htmlFor="postalCode"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+              >
+                PIN Code
+              </label>
+
+              <input
+                id="postalCode"
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="6-digit PIN code"
+                value={postalCode}
+                onChange={(event) =>
+                  handlePostalCodeChange(event.target.value)
+                }
+                required
+                disabled={saving}
+                autoComplete="postal-code"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium tracking-wide text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+              />
+
+              <p className="mt-1.5 text-xs text-gray-400">
+                We'll check whether B-Fresh delivers to this PIN.
+              </p>
+            </div>
+
+            {/* Submit */}
             <button
               type="submit"
               disabled={saving}
-              className="w-full rounded-lg bg-green-700 px-5 py-3 font-medium text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-green-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-800 hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
             >
-              {saving
-                ? "Saving..."
-                : editingId
-                  ? "Update Address"
-                  : "Save Address"}
+              {saving ? (
+                <>
+                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                  {editingId ? "Updating address..." : "Saving address..."}
+                </>
+              ) : editingId ? (
+                "Update Address"
+              ) : (
+                "Save Address"
+              )}
             </button>
           </form>
 
+          {/* Feedback */}
           {message && (
-            <p className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-              {message}
-            </p>
+            <div
+              role="status"
+              className="mx-5 mb-5 flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-3.5 text-sm font-medium text-green-800 sm:mx-6"
+            >
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs text-white">
+                ✓
+              </span>
+              <span>{message}</span>
+            </div>
           )}
 
           {error && (
-            <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-              {error}
-            </p>
+            <div
+              role="alert"
+              className="mx-5 mb-5 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3.5 text-sm font-medium text-red-700 sm:mx-6"
+            >
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+                !
+              </span>
+              <span>{error}</span>
+            </div>
           )}
         </div>
 
         {/* Saved addresses */}
         <div>
           {loading ? (
-            <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
-              <p className="text-gray-500">
-                Loading addresses...
+            <div className="rounded-3xl border border-green-100 bg-[#fffdf7] p-8 text-center shadow-sm">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-green-200 border-t-green-700" />
+              </div>
+
+              <p className="mt-4 text-sm font-semibold text-gray-700">
+                Loading your addresses...
+              </p>
+
+              <p className="mt-1 text-xs text-gray-500">
+                Just a moment.
               </p>
             </div>
           ) : addresses.length === 0 ? (
-            <div className="rounded-2xl border border-dashed bg-white p-8 text-center">
-              <p className="font-medium text-gray-900">
-                No saved addresses yet.
-              </p>
+            <div className="rounded-3xl border border-dashed border-green-200 bg-[#fffdf7] px-6 py-12 text-center shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-green-100 text-green-700">
+                <LocationIcon />
+              </div>
 
-              <p className="mt-1 text-sm text-gray-500">
-                Add your first delivery address using the form.
+              <h3 className="mt-5 text-xl font-black text-gray-900">
+                No saved addresses yet
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500">
+                Add your first delivery address and your next B-Fresh
+                checkout will be much faster.
               </p>
             </div>
           ) : (
             <div className="space-y-4">
               {addresses.map((address) => (
-                <div
+                <article
                   key={address.id}
-                  className="rounded-2xl bg-white p-6 shadow-sm"
+                  className={`overflow-hidden rounded-3xl border bg-[#fffdf7] shadow-sm transition ${
+                    address.is_default
+                      ? "border-green-200 shadow-green-900/5"
+                      : "border-green-100 hover:border-green-200 hover:shadow-md"
+                  }`}
                 >
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-semibold text-gray-900">
-                          {address.label}
-                        </h3>
-
-                        {address.is_default && (
-                          <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                            Default
-                          </span>
-                        )}
+                  {/* Card header */}
+                  <div
+                    className={`flex items-center justify-between gap-3 border-b px-5 py-4 ${
+                      address.is_default
+                        ? "border-green-100 bg-green-50/80"
+                        : "border-green-100 bg-white/60"
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
+                          address.is_default
+                            ? "bg-green-700 text-white"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        <HomeIcon />
                       </div>
 
-                      <p className="mt-2 text-sm leading-6 text-gray-600">
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-black text-gray-900">
+                            {address.label}
+                          </h3>
+
+                          {address.is_default && (
+                            <span className="rounded-full bg-green-700 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-white">
+                              Default
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          {address.city}, {address.state}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Address body */}
+                  <div className="p-5 sm:p-6">
+                    <div className="rounded-2xl bg-green-50/60 p-4">
+                      <p className="font-bold text-gray-900">
                         {address.full_name}
-                        <br />
+                      </p>
+
+                      <p className="mt-2 text-sm leading-6 text-gray-700">
                         {address.address_line1}
                         {address.address_line2
                           ? `, ${address.address_line2}`
@@ -608,28 +890,43 @@ export default function AddressManager() {
                         <br />
                         {address.city}, {address.state} -{" "}
                         {address.postal_code}
-                        <br />
-                        Phone: {address.phone}
                       </p>
+
+                      <div className="mt-3 flex items-center gap-2 text-xs font-medium text-gray-600">
+                        <PhoneIcon />
+                        <span>+91 {address.phone}</span>
+                      </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    {/* Actions */}
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
                       {!address.is_default && (
                         <button
                           type="button"
                           onClick={() =>
                             setDefaultAddress(address.id)
                           }
-                          className="text-sm font-medium text-green-700 hover:text-green-800"
+                          disabled={
+                            updatingDefault !== null ||
+                            deletingId !== null
+                          }
+                          className="rounded-xl bg-green-50 px-3.5 py-2.5 text-xs font-bold text-green-800 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          Make default
+                          {updatingDefault === address.id
+                            ? "Setting..."
+                            : "Make Default"}
                         </button>
                       )}
 
                       <button
                         type="button"
                         onClick={() => startEdit(address)}
-                        className="text-sm font-medium text-gray-700 hover:text-gray-900"
+                        disabled={
+                          updatingDefault !== null ||
+                          deletingId !== null ||
+                          saving
+                        }
+                        className="rounded-xl border border-green-100 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-700 transition hover:border-green-200 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Edit
                       </button>
@@ -637,13 +934,20 @@ export default function AddressManager() {
                       <button
                         type="button"
                         onClick={() => deleteAddress(address.id)}
-                        className="text-sm font-medium text-red-600 hover:text-red-700"
+                        disabled={
+                          deletingId !== null ||
+                          updatingDefault !== null ||
+                          saving
+                        }
+                        className="rounded-xl border border-red-100 bg-white px-3.5 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        Delete
+                        {deletingId === address.id
+                          ? "Deleting..."
+                          : "Delete"}
                       </button>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}

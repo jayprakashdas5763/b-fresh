@@ -1,6 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import {
+  FormEvent,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -13,6 +17,8 @@ export default function ResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] =
     useState("");
 
+  const [checkingSession, setCheckingSession] =
+    useState(true);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -21,46 +27,72 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function checkSession() {
+    let mounted = true;
+
+    async function checkRecoverySession() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session) {
+      if (!mounted) return;
+
+      if (session) {
+        setReady(true);
+      } else {
         setError(
           "This password reset link is invalid or has expired."
         );
-        return;
       }
 
-      setReady(true);
+      setCheckingSession(false);
     }
 
-    checkSession();
-  }, []);
+    checkRecoverySession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+
+        if (
+          event === "PASSWORD_RECOVERY" &&
+          session
+        ) {
+          setReady(true);
+          setCheckingSession(false);
+          setError("");
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
-    setLoading(true);
-    setMessage("");
     setError("");
+    setMessage("");
 
     if (password.length < 8) {
       setError(
         "Password must be at least 8 characters long."
       );
-      setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
-      setLoading(false);
       return;
     }
+
+    setLoading(true);
 
     try {
       const { error: updateError } =
@@ -73,16 +105,14 @@ export default function ResetPasswordPage() {
       }
 
       setMessage(
-        "Password updated successfully. Redirecting..."
+        "Password updated successfully."
       );
 
       setPassword("");
       setConfirmPassword("");
 
-      setTimeout(() => {
-        router.push("/account");
-        router.refresh();
-      }, 1200);
+      router.push("/account");
+      router.refresh();
     } catch (err) {
       setError(
         err instanceof Error
@@ -95,48 +125,65 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-gray-50 px-4 py-10">
+    <main className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-[#f4faef] px-4 py-10">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl bg-white p-8 shadow-sm">
+        <div className="rounded-3xl border border-green-100 bg-white p-6 shadow-sm sm:p-8">
           <div className="text-center">
             <Link
               href="/"
-              className="text-3xl font-bold text-gray-900"
+              className="inline-block text-3xl font-extrabold tracking-tight text-green-800"
             >
               B-Fresh
             </Link>
 
+            <div className="mx-auto mt-4 h-1 w-12 rounded-full bg-lime-400" />
+
             <h1 className="mt-6 text-2xl font-bold text-gray-900">
-              Reset Password
+              Reset your password
             </h1>
 
-            <p className="mt-2 text-sm text-gray-600">
-              Create a new password for your account.
+            <p className="mt-2 text-sm leading-6 text-gray-600">
+              Create a new password for your B-Fresh
+              account.
             </p>
           </div>
 
-          {ready ? (
+          {checkingSession ? (
+            <div className="mt-6 rounded-2xl bg-[#f7fbf2] p-5 text-center">
+              <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-green-700 border-t-transparent" />
+              <p className="mt-3 text-sm text-gray-600">
+                Checking your password reset link...
+              </p>
+            </div>
+          ) : ready ? (
             <form
               onSubmit={handleSubmit}
-              className="mt-6 space-y-4"
+              className="mt-6 space-y-5"
             >
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-semibold text-gray-800"
+                >
                   New Password
                 </label>
 
                 <div className="relative">
                   <input
+                    id="password"
                     type={
-                      showPassword ? "text" : "password"
+                      showPassword
+                        ? "text"
+                        : "password"
                     }
                     value={password}
                     onChange={(event) =>
                       setPassword(event.target.value)
                     }
                     minLength={8}
+                    autoComplete="new-password"
                     required
-                    className="w-full rounded-lg border border-gray-300 p-3 pr-20 text-gray-900 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+                    className="w-full rounded-xl border border-gray-300 bg-white p-3 pr-20 text-gray-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                   />
 
                   <button
@@ -146,65 +193,105 @@ export default function ResetPasswordPage() {
                         (current) => !current
                       )
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md px-1 text-sm font-semibold text-green-700 hover:text-green-800"
+                    aria-label={
+                      showPassword
+                        ? "Hide password"
+                        : "Show password"
+                    }
                   >
-                    {showPassword ? "Hide" : "Show"}
+                    {showPassword
+                      ? "Hide"
+                      : "Show"}
                   </button>
                 </div>
+
+                <p className="mt-1.5 text-xs text-gray-500">
+                  Use at least 8 characters.
+                </p>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="confirm-password"
+                  className="mb-2 block text-sm font-semibold text-gray-800"
+                >
                   Confirm Password
                 </label>
 
                 <input
+                  id="confirm-password"
                   type={
-                    showPassword ? "text" : "password"
+                    showPassword
+                      ? "text"
+                      : "password"
                   }
                   value={confirmPassword}
                   onChange={(event) =>
-                    setConfirmPassword(event.target.value)
+                    setConfirmPassword(
+                      event.target.value
+                    )
                   }
                   minLength={8}
+                  autoComplete="new-password"
                   required
-                  className="w-full rounded-lg border border-gray-300 p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
+                  className="w-full rounded-xl border border-gray-300 bg-white p-3 text-gray-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
                 />
               </div>
+
+              {error && (
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-100 bg-red-50 p-3 text-sm text-red-700"
+                >
+                  {error}
+                </div>
+              )}
+
+              {message && (
+                <div
+                  role="status"
+                  className="rounded-xl border border-green-100 bg-green-50 p-3 text-sm text-green-700"
+                >
+                  {message}
+                </div>
+              )}
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full rounded-lg bg-green-700 px-5 py-3 font-semibold text-white hover:bg-green-800 disabled:opacity-50"
+                aria-busy={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-5 py-3 font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading
-                  ? "Updating..."
-                  : "Update Password"}
+                {loading ? (
+                  <>
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Password"
+                )}
               </button>
             </form>
           ) : (
-            <div className="mt-6 rounded-lg bg-gray-50 p-4 text-center text-sm text-gray-600">
-              {error ||
-                "Checking your password reset link..."}
+            <div className="mt-6 rounded-2xl border border-red-100 bg-red-50 p-5 text-center">
+              <p className="text-sm leading-6 text-red-700">
+                {error}
+              </p>
+
+              <Link
+                href="/auth"
+                className="mt-4 inline-block text-sm font-semibold text-green-700 hover:text-green-800"
+              >
+                Request a new reset link
+              </Link>
             </div>
-          )}
-
-          {message && (
-            <p className="mt-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-              {message}
-            </p>
-          )}
-
-          {error && ready && (
-            <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-              {error}
-            </p>
           )}
 
           <div className="mt-6 text-center">
             <Link
               href="/auth"
-              className="text-sm font-medium text-green-700 hover:text-green-800"
+              className="text-sm font-semibold text-green-700 hover:text-green-800"
             >
               ← Back to Login
             </Link>

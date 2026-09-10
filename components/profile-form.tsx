@@ -4,119 +4,161 @@ import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type ProfileFormProps = {
-    userId: string;
-    initialFullName: string;
-    initialPhone: string;
+  userId: string;
+  initialFullName: string;
+  initialPhone: string;
 };
 
 export default function ProfileForm({
-    userId,
-    initialFullName,
-    initialPhone,
+  userId,
+  initialFullName,
+  initialPhone,
 }: ProfileFormProps) {
-    const supabase = createClient();
+  const supabase = createClient();
 
-    const [fullName, setFullName] = useState(initialFullName);
-    const [phone, setPhone] = useState(initialPhone);
-    const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState("");
-    const [error, setError] = useState("");
+  const [fullName, setFullName] = useState(initialFullName);
+  const [phone, setPhone] = useState(initialPhone);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-    async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-        event.preventDefault();
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
 
-        setSaving(true);
-        setMessage("");
-        setError("");
+    setSaving(true);
+    setMessage("");
+    setError("");
 
-        const cleanName = fullName.trim();
-        const cleanPhone = phone.trim();
+    const cleanName = fullName.trim();
+    const cleanPhone = phone.trim();
 
-        if (!cleanName) {
-            setError("Please enter your full name.");
-            setSaving(false);
-            return;
-        }
-
-        const { error: updateError } = await supabase
-            .from("profiles")
-            .update({
-                full_name: cleanName,
-                phone: cleanPhone || null,
-                updated_at: new Date().toISOString(),
-            })
-            .eq("id", userId);
-
-        if (updateError) {
-            setError(updateError.message);
-        } else {
-            setMessage("Profile updated successfully.");
-        }
-
-        setSaving(false);
+    if (!cleanName) {
+      setError("Please enter your full name.");
+      setSaving(false);
+      return;
     }
 
-    return (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-            <div>
-                <label
-                    htmlFor="fullName"
-                    className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                    Full Name
-                </label>
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({
+        full_name: cleanName,
+        phone: cleanPhone || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", userId);
 
-                <input
-                    id="fullName"
-                    type="text"
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                    placeholder="Your full name"
-                    required
-                    maxLength={100}
-                    className="w-full rounded-lg border border-gray-300 p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
-                />
-            </div>
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setMessage("Your profile has been updated successfully.");
+    }
 
-            <div>
-                <label
-                    htmlFor="phone"
-                    className="mb-1 block text-sm font-medium text-gray-700"
-                >
-                    Phone Number
-                </label>
+    setSaving(false);
+  }
 
-                <input
-                    id="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(event) => setPhone(event.target.value)}
-                    placeholder="Your phone number"
-                    maxLength={20}
-                    autoComplete="tel"
-                    className="w-full rounded-lg border border-gray-300 p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-1 focus:ring-green-600"
-                />
-            </div>
+  return (
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Full Name */}
+      <div>
+        <label
+          htmlFor="fullName"
+          className="mb-2 block text-sm font-bold text-gray-800"
+        >
+          Full Name
+        </label>
 
-            {message && (
-                <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
-                    {message}
-                </div>
-            )}
+        <input
+          id="fullName"
+          type="text"
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
+          placeholder="Enter your full name"
+          autoComplete="name"
+          required
+          maxLength={100}
+          className="w-full rounded-2xl border border-green-100 bg-[#fffdf7] px-4 py-3.5 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100"
+        />
 
-            {error && (
-                <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                    {error}
-                </div>
-            )}
+        <p className="mt-1.5 text-xs text-gray-500">
+          Use the name you would like to use for your deliveries.
+        </p>
+      </div>
 
-            <button
-                type="submit"
-                disabled={saving}
-                className="rounded-lg bg-green-700 px-5 py-3 font-semibold text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-                {saving ? "Saving..." : "Save Profile"}
-            </button>
-        </form>
-    );
+      {/* Phone */}
+      <div>
+        <label
+          htmlFor="phone"
+          className="mb-2 block text-sm font-bold text-gray-800"
+        >
+          Phone Number
+        </label>
+
+        <div className="flex overflow-hidden rounded-2xl border border-green-100 bg-[#fffdf7] transition hover:border-green-200 focus-within:border-green-500 focus-within:ring-4 focus-within:ring-green-100">
+          <div className="flex items-center border-r border-green-100 bg-green-50 px-3 text-sm font-bold text-green-800">
+            +91
+          </div>
+
+          <input
+            id="phone"
+            type="tel"
+            value={phone.replace(/^\+91\s?/, "")}
+            onChange={(event) => {
+              const digits = event.target.value.replace(/\D/g, "").slice(0, 10);
+              setPhone(digits ? `+91${digits}` : "");
+            }}
+            placeholder="9876543210"
+            inputMode="numeric"
+            autoComplete="tel"
+            maxLength={10}
+            className="min-w-0 flex-1 bg-transparent px-4 py-3.5 text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
+          />
+        </div>
+
+        <p className="mt-1.5 text-xs text-gray-500">
+          A valid mobile number helps with delivery updates.
+        </p>
+      </div>
+
+      {/* Feedback */}
+      {message && (
+        <div
+          role="status"
+          className="flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-3.5 text-sm font-medium text-green-800"
+        >
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs text-white">
+            ✓
+          </span>
+          <span>{message}</span>
+        </div>
+      )}
+
+      {error && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3.5 text-sm font-medium text-red-700"
+        >
+          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+            !
+          </span>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Save */}
+      <button
+        type="submit"
+        disabled={saving}
+        className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-green-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-800 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0 disabled:hover:shadow-sm"
+      >
+        {saving ? (
+          <>
+            <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+            Saving changes...
+          </>
+        ) : (
+          "Save Profile"
+        )}
+      </button>
+    </form>
+  );
 }
