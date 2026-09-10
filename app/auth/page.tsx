@@ -16,6 +16,7 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,7 @@ export default function AuthPage() {
     setMode(newMode);
     clearMessages();
     setPassword("");
+    setAcceptedTerms(false);
   }
 
   function validateForm() {
@@ -90,6 +92,12 @@ export default function AuthPage() {
     clearMessages();
 
     if (!validateForm()) {
+      return;
+    }
+    if (mode === "signup" && !acceptedTerms) {
+      setError(
+        "Please accept the Terms & Conditions and Privacy Policy to create your account."
+      );
       return;
     }
 
@@ -240,11 +248,10 @@ export default function AuthPage() {
                 <button
                   type="button"
                   onClick={() => switchMode("login")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1 ${
-                    mode === "login"
-                      ? "bg-white text-gray-950 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1 ${mode === "login"
+                    ? "bg-white text-gray-950 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Sign In
                 </button>
@@ -252,11 +259,10 @@ export default function AuthPage() {
                 <button
                   type="button"
                   onClick={() => switchMode("signup")}
-                  className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1 ${
-                    mode === "signup"
-                      ? "bg-white text-gray-950 shadow-sm"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
+                  className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1 ${mode === "signup"
+                    ? "bg-white text-gray-950 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
                 >
                   Create Account
                 </button>
@@ -296,11 +302,10 @@ export default function AuthPage() {
                         ? "full-name-error"
                         : undefined
                     }
-                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:ring-2 ${
-                      fieldErrors.fullName
-                        ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                        : "border-gray-300 focus:border-green-600 focus:ring-green-100"
-                    }`}
+                    className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:ring-2 ${fieldErrors.fullName
+                      ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                      : "border-gray-300 focus:border-green-600 focus:ring-green-100"
+                      }`}
                   />
 
                   {fieldErrors.fullName && (
@@ -325,11 +330,10 @@ export default function AuthPage() {
                   </label>
 
                   <div
-                    className={`flex overflow-hidden rounded-xl border bg-white transition ${
-                      fieldErrors.phone
-                        ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100"
-                        : "border-gray-300 focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100"
-                    }`}
+                    className={`flex overflow-hidden rounded-xl border bg-white transition ${fieldErrors.phone
+                      ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100"
+                      : "border-gray-300 focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100"
+                      }`}
                   >
                     <div className="flex items-center border-r border-gray-200 bg-gray-50 px-3 text-sm font-semibold text-gray-700">
                       +91
@@ -416,11 +420,10 @@ export default function AuthPage() {
                       ? "email-error"
                       : undefined
                   }
-                  className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:ring-2 ${
-                    fieldErrors.email
-                      ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-                      : "border-gray-300 focus:border-green-600 focus:ring-green-100"
-                  }`}
+                  className={`w-full rounded-xl border bg-white px-4 py-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:ring-2 ${fieldErrors.email
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+                    : "border-gray-300 focus:border-green-600 focus:ring-green-100"
+                    }`}
                 />
 
                 {fieldErrors.email && (
@@ -456,11 +459,10 @@ export default function AuthPage() {
                 </div>
 
                 <div
-                  className={`relative rounded-xl border bg-white transition ${
-                    fieldErrors.password
-                      ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100"
-                      : "border-gray-300 focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100"
-                  }`}
+                  className={`relative rounded-xl border bg-white transition ${fieldErrors.password
+                    ? "border-red-400 focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100"
+                    : "border-gray-300 focus-within:border-green-600 focus-within:ring-2 focus-within:ring-green-100"
+                    }`}
                 >
                   <input
                     id="password"
@@ -528,6 +530,49 @@ export default function AuthPage() {
                 ) : null}
               </div>
 
+              {mode === "signup" && (
+                <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-3.5">
+                  <div className="flex items-start gap-3">
+                    <input
+                      id="terms"
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={(event) => {
+                        setAcceptedTerms(event.target.checked);
+
+                        if (event.target.checked) {
+                          setError("");
+                        }
+                      }}
+                      className="mt-1 h-4 w-4 shrink-0 rounded border-gray-300 text-green-700 focus:ring-2 focus:ring-green-600"
+                    />
+
+                    <label
+                      htmlFor="terms"
+                      className="text-xs leading-5 text-gray-600"
+                    >
+                      I agree to the{" "}
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        className="font-semibold text-green-700 hover:text-green-800"
+                      >
+                        Terms & Conditions
+                      </Link>{" "}
+                      and{" "}
+                      <Link
+                        href="/privacy"
+                        target="_blank"
+                        className="font-semibold text-green-700 hover:text-green-800"
+                      >
+                        Privacy Policy
+                      </Link>
+                      .
+                    </label>
+                  </div>
+                </div>
+              )}
+
               {/* Submit */}
               <button
                 type="submit"
@@ -548,6 +593,19 @@ export default function AuthPage() {
                     : "Sign In"}
               </button>
             </form>
+
+            {mode === "signup" && (
+              <p className="mt-5 text-center text-sm text-gray-600">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => switchMode("login")}
+                  className="font-semibold text-green-700 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+                >
+                  Sign in
+                </button>
+              </p>
+            )}
 
             {/* Messages */}
             {message && (
