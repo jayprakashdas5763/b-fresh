@@ -40,13 +40,9 @@ export default async function ProductsPage({
   }
 
   const selectedCategory = categories?.find(
-    (category) => category.slug === categorySlug
+    (category) => category.slug === categorySlug,
   );
 
-  /*
-   * Count matching products first.
-   * This lets us safely handle URLs such as /products?page=999.
-   */
   let countQuery = supabase
     .from("products")
     .select("id", { count: "exact", head: true })
@@ -60,7 +56,7 @@ export default async function ProductsPage({
     const escapedSearch = searchQuery.replace(/[%_]/g, "\\$&");
 
     countQuery = countQuery.or(
-      `name.ilike.%${escapedSearch}%,sku.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`
+      `name.ilike.%${escapedSearch}%,sku.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`,
     );
   }
 
@@ -75,7 +71,7 @@ export default async function ProductsPage({
 
   const totalPages = Math.max(
     1,
-    Math.ceil((totalProducts ?? 0) / pageSize)
+    Math.ceil((totalProducts ?? 0) / pageSize),
   );
 
   const safePage =
@@ -84,9 +80,6 @@ export default async function ProductsPage({
   const from = (safePage - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  /*
-   * Fetch only the products for the current page.
-   */
   let productQuery = supabase
     .from("products")
     .select(`
@@ -111,7 +104,7 @@ export default async function ProductsPage({
   if (selectedCategory) {
     productQuery = productQuery.eq(
       "category_id",
-      selectedCategory.id
+      selectedCategory.id,
     );
   }
 
@@ -119,7 +112,7 @@ export default async function ProductsPage({
     const escapedSearch = searchQuery.replace(/[%_]/g, "\\$&");
 
     productQuery = productQuery.or(
-      `name.ilike.%${escapedSearch}%,sku.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`
+      `name.ilike.%${escapedSearch}%,sku.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`,
     );
   }
 
@@ -177,7 +170,7 @@ export default async function ProductsPage({
   };
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[#f5faef]">
       {productListStructuredData && (
         <script
           type="application/ld+json"
@@ -188,26 +181,41 @@ export default async function ProductsPage({
       )}
 
       {/* Header */}
-      <section className="border-b bg-gray-50">
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-green-700">
-            B-Fresh Store
-          </p>
+      <section className="relative overflow-hidden border-b border-green-100 bg-gradient-to-br from-green-800 via-green-700 to-green-600">
+        <div
+          className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-lime-300/15 blur-3xl"
+          aria-hidden="true"
+        />
 
-          <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-                Fresh products
+        <div
+          className="pointer-events-none absolute -bottom-40 left-1/3 h-80 w-80 rounded-full bg-green-300/15 blur-3xl"
+          aria-hidden="true"
+        />
+
+        <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <div className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-green-100">
+            <span className="h-px w-7 bg-green-200" />
+            B-Fresh Store
+          </div>
+
+          <div className="mt-5 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <h1 className="text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl lg:text-6xl">
+                Fresh choices.
+                <span className="block text-lime-200">
+                  One easy store.
+                </span>
               </h1>
 
-              <p className="mt-2 text-gray-600">
-                Find fresh dairy, healthy food, groceries, and daily essentials.
+              <p className="mt-4 max-w-2xl text-sm leading-7 text-green-50/85 sm:text-base">
+                Explore fresh dairy, healthy food, groceries and everyday
+                essentials selected for your home.
               </p>
             </div>
 
             <Link
               href="/"
-              className="text-sm font-medium text-green-700 hover:text-green-800"
+              className="inline-flex min-h-11 w-fit items-center rounded-full border border-white/20 bg-white/10 px-5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
             >
               ← Back to home
             </Link>
@@ -215,64 +223,86 @@ export default async function ProductsPage({
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {/* Search */}
-        <form
-          action="/products"
-          method="GET"
-          className="mb-8 flex flex-col gap-3 sm:flex-row"
-        >
-          <input
-            type="search"
-            name="q"
-            defaultValue={searchQuery}
-            placeholder="Search products..."
-            className="min-w-0 flex-1 rounded-xl border border-gray-300 px-4 py-3 text-gray-900 outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100"
-          />
-
-          {categorySlug && (
-            <input
-              type="hidden"
-              name="category"
-              value={categorySlug}
-            />
-          )}
-
-          <button
-            type="submit"
-            className="rounded-xl bg-green-700 px-6 py-3 font-medium text-white hover:bg-green-800"
+        <section className="rounded-3xl border border-green-100 bg-white p-4 shadow-sm sm:p-5">
+          <form
+            action="/products"
+            method="GET"
+            className="flex flex-col gap-3 sm:flex-row"
           >
-            Search
-          </button>
-        </form>
+            <div className="relative flex-1">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="m16 16 5 5" />
+              </svg>
+
+              <input
+                type="search"
+                name="q"
+                defaultValue={searchQuery}
+                placeholder="Search fresh products..."
+                className="min-h-12 w-full rounded-2xl border border-gray-200 bg-gray-50 pl-11 pr-4 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-green-500 focus:bg-white focus:ring-4 focus:ring-green-100"
+              />
+            </div>
+
+            {categorySlug && (
+              <input
+                type="hidden"
+                name="category"
+                value={categorySlug}
+              />
+            )}
+
+            <button
+              type="submit"
+              className="min-h-12 rounded-2xl bg-green-700 px-7 text-sm font-bold text-white shadow-lg shadow-green-800/10 transition hover:-translate-y-0.5 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+            >
+              Search
+            </button>
+          </form>
+        </section>
 
         {/* Categories */}
-        <div className="mb-10">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Categories
-            </h2>
+        <section className="mt-8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-green-700">
+                Browse
+              </p>
+
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-gray-950">
+                Shop by category
+              </h2>
+            </div>
 
             {(categorySlug || searchQuery) && (
               <Link
                 href="/products"
-                className="text-sm font-medium text-green-700 hover:text-green-800"
+                className="rounded-full bg-white px-4 py-2 text-xs font-bold text-green-800 shadow-sm ring-1 ring-green-100 transition hover:bg-green-50"
               >
                 Clear filters
               </Link>
             )}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="mt-5 flex gap-2 overflow-x-auto pb-2">
             <Link
               href={
                 searchQuery
                   ? `/products?q=${encodeURIComponent(searchQuery)}`
                   : "/products"
               }
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${!categorySlug
-                  ? "bg-green-700 text-white"
-                  : "border bg-white text-gray-700 hover:bg-gray-50"
+              className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-bold transition ${!categorySlug
+                  ? "bg-green-700 text-white shadow-md shadow-green-800/10"
+                  : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-green-50 hover:text-green-800"
                 }`}
             >
               All Products
@@ -291,9 +321,9 @@ export default async function ProductsPage({
                 <Link
                   key={category.id}
                   href={`/products?${query.toString()}`}
-                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${category.slug === categorySlug
-                      ? "bg-green-700 text-white"
-                      : "border bg-white text-gray-700 hover:bg-gray-50"
+                  className={`shrink-0 rounded-full px-5 py-2.5 text-sm font-bold transition ${category.slug === categorySlug
+                      ? "bg-green-700 text-white shadow-md shadow-green-800/10"
+                      : "bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-green-50 hover:text-green-800"
                     }`}
                 >
                   {category.name}
@@ -301,96 +331,111 @@ export default async function ProductsPage({
               );
             })}
           </div>
-        </div>
+        </section>
 
-        {/* Result heading */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {selectedCategory
-              ? selectedCategory.name
-              : searchQuery
-                ? `Search results for "${searchQuery}"`
-                : "All Products"}
-          </h2>
+        {/* Results */}
+        <section className="mt-10">
+          <div className="flex flex-col gap-3 border-b border-green-100 pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-green-700">
+                {selectedCategory ? "Category" : searchQuery ? "Search" : "Fresh picks"}
+              </p>
 
-          <p className="mt-1 text-sm text-gray-500">
-            {totalProducts ?? 0}{" "}
-            {(totalProducts ?? 0) === 1
-              ? "product"
-              : "products"}
-          </p>
-        </div>
-
-        {/* Products */}
-        {products && products.length > 0 ? (
-          <>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {products.map((product, index) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  priority={index === 0}
-                />
-              ))}
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-gray-950 sm:text-3xl">
+                {selectedCategory
+                  ? selectedCategory.name
+                  : searchQuery
+                    ? `Results for "${searchQuery}"`
+                    : "All products"}
+              </h2>
             </div>
 
-            {totalPages > 1 && (
-              <nav
-                className="mt-10 flex items-center justify-center gap-3"
-                aria-label="Product pagination"
-              >
-                {safePage > 1 ? (
-                  <Link
-                    href={buildPageUrl(previousPage)}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                  >
-                    ← Previous
-                  </Link>
-                ) : (
-                  <span className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-400">
-                    ← Previous
-                  </span>
-                )}
-
-                <span className="text-sm text-gray-600">
-                  Page {safePage} of {totalPages}
-                </span>
-
-                {safePage < totalPages ? (
-                  <Link
-                    href={buildPageUrl(nextPage)}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-                  >
-                    Next →
-                  </Link>
-                ) : (
-                  <span className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-400">
-                    Next →
-                  </span>
-                )}
-              </nav>
-            )}
-          </>
-        ) : (
-          <div className="rounded-2xl border border-dashed p-12 text-center">
-            <div className="text-5xl">🔎</div>
-
-            <h3 className="mt-4 text-lg font-semibold text-gray-900">
-              No products found
-            </h3>
-
-            <p className="mt-2 text-gray-600">
-              Try another search or browse all products.
+            <p className="text-sm font-medium text-gray-500">
+              {totalProducts ?? 0}{" "}
+              {(totalProducts ?? 0) === 1
+                ? "product"
+                : "products"}
             </p>
-
-            <Link
-              href="/products"
-              className="mt-5 inline-block rounded-lg bg-green-700 px-5 py-3 font-medium text-white hover:bg-green-800"
-            >
-              View all products
-            </Link>
           </div>
-        )}
+
+          {products && products.length > 0 ? (
+            <>
+              <div className="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+                {products.map((product, index) => (
+                  <div
+                    key={product.id}
+                    className="transition duration-300 hover:-translate-y-1"
+                  >
+                    <ProductCard
+                      product={product}
+                      priority={index === 0}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <nav
+                  className="mt-12 flex items-center justify-center gap-3"
+                  aria-label="Product pagination"
+                >
+                  {safePage > 1 ? (
+                    <Link
+                      href={buildPageUrl(previousPage)}
+                      className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-gray-200 transition hover:bg-green-50 hover:text-green-800"
+                    >
+                      ← Previous
+                    </Link>
+                  ) : (
+                    <span className="rounded-full bg-gray-100 px-5 py-2.5 text-sm font-bold text-gray-400">
+                      ← Previous
+                    </span>
+                  )}
+
+                  <span className="rounded-full bg-green-50 px-4 py-2.5 text-sm font-bold text-green-800">
+                    {safePage} / {totalPages}
+                  </span>
+
+                  {safePage < totalPages ? (
+                    <Link
+                      href={buildPageUrl(nextPage)}
+                      className="rounded-full bg-white px-5 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-gray-200 transition hover:bg-green-50 hover:text-green-800"
+                    >
+                      Next →
+                    </Link>
+                  ) : (
+                    <span className="rounded-full bg-gray-100 px-5 py-2.5 text-sm font-bold text-gray-400">
+                      Next →
+                    </span>
+                  )}
+                </nav>
+              )}
+            </>
+          ) : (
+            <div className="mt-7 rounded-3xl border border-dashed border-green-200 bg-white px-6 py-16 text-center shadow-sm">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-green-50 text-3xl">
+                🔎
+              </div>
+
+              <h3 className="mt-5 text-xl font-black text-gray-950">
+                Nothing matched your search
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+                Try another search term or browse the complete B-Fresh
+                collection.
+              </p>
+
+              <Link
+                href="/products"
+                className="mt-6 inline-flex min-h-11 items-center rounded-full bg-green-700 px-6 text-sm font-bold text-white transition hover:bg-green-800"
+              >
+                View all products
+                <span className="ml-2">→</span>
+              </Link>
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

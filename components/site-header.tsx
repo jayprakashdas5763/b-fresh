@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SiteHeaderNav from "@/components/site-header-nav";
+import Image from "next/image";
 
 export default async function SiteHeader() {
   const supabase = await createClient();
@@ -71,21 +72,30 @@ export default async function SiteHeader() {
   }
 
   return (
-    <header className="relative border-b bg-white">
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+<header className="sticky top-0 z-50 border-b border-green-100 bg-[#f7fbf2]/95 shadow-sm backdrop-blur-md">
+      <div className="mx-auto flex min-h-[4.25rem] max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
-          className="flex shrink-0 items-center"
+          className="group flex shrink-0 items-center rounded-2xl p-1.5 -ml-1.5 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
           aria-label="B-Fresh home"
         >
-          <img
+          <Image
             src="/icon-192.png"
             alt="B-Fresh"
-            className="h-11 w-11 object-contain"
+            width={44}
+            height={44}
+            priority
+            className="rounded-xl transition duration-300 group-hover:scale-105"
           />
-          <span className="ml-2 text-xl font-extrabold tracking-tight text-gray-900">
-            B-Fresh
-          </span>
+
+          <div className="ml-2.5">
+            <span className="block text-[1.25rem] font-black tracking-[-0.03em] text-gray-950">
+              B-Fresh
+            </span>
+            <span className="hidden text-[9px] font-bold uppercase tracking-[0.15em] text-green-700 sm:block">
+              Fresh • Local • Simple
+            </span>
+          </div>
         </Link>
 
         <div className="flex items-center gap-2">
