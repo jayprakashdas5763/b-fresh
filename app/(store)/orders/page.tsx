@@ -1,7 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CancelOrderButton from "@/components/cancel-order-button";
+
+export const metadata: Metadata = {
+  title: "My Orders",
+  description: "View your B-Fresh order history and order status.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function OrdersPage() {
   const supabase = await createClient();
@@ -100,15 +110,14 @@ export default async function OrdersPage() {
 
                     <div className="flex flex-wrap items-center gap-3">
                       <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${
-                          order.status === "delivered"
+                        className={`rounded-full px-3 py-1 text-xs font-medium capitalize ${order.status === "delivered"
                             ? "bg-green-100 text-green-800"
                             : order.status === "cancelled"
                               ? "bg-red-100 text-red-800"
                               : order.status === "refunded"
                                 ? "bg-purple-100 text-purple-800"
                                 : "bg-yellow-100 text-yellow-800"
-                        }`}
+                          }`}
                       >
                         {order.status.replaceAll("_", " ")}
                       </span>
@@ -164,10 +173,10 @@ export default async function OrdersPage() {
                   "processing",
                   "packed",
                 ].includes(order.status) && (
-                  <div className="mt-5 border-t pt-5">
-                    <CancelOrderButton orderId={order.id} />
-                  </div>
-                )}
+                    <div className="mt-5 border-t pt-5">
+                      <CancelOrderButton orderId={order.id} />
+                    </div>
+                  )}
               </div>
             ))}
           </div>

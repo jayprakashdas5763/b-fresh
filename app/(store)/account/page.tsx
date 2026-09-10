@@ -1,8 +1,18 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AddressManager from "@/components/address-manager";
 import ProfileForm from "@/components/profile-form";
+
+export const metadata: Metadata = {
+  title: "My Account",
+  description: "Manage your B-Fresh profile, delivery addresses, and orders.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function AccountPage() {
   const supabase = await createClient();

@@ -1,7 +1,30 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import CategoryCard from "@/components/category-card";
 import ProductCard from "@/components/product-card";
+
+export const metadata: Metadata = {
+  title: "Fresh Food & Dairy Delivery in Odisha",
+  description:
+    "Shop fresh dairy products, healthy food, groceries, and everyday essentials from B-Fresh. Convenient local delivery across our service area in Odisha.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    title: "B-Fresh | Fresh Food & Dairy Delivered",
+    description:
+      "Shop fresh dairy products, healthy food, groceries, and everyday essentials from B-Fresh.",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "B-Fresh | Fresh Food & Dairy Delivered",
+    description:
+      "Shop fresh dairy products, healthy food, groceries, and everyday essentials from B-Fresh.",
+  },
+};
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -37,8 +60,37 @@ export default async function HomePage() {
     .order("created_at", { ascending: false })
     .limit(8);
 
+  const websiteStructuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        name: "B-Fresh",
+        description:
+          "Fresh food, dairy products, groceries, and everyday essentials delivered locally.",
+      },
+      {
+        "@type": "WebSite",
+        name: "B-Fresh",
+        description:
+          "Fresh food and quality dairy products delivered to your doorstep.",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: "/products?q={search_term_string}",
+          "query-input": "required name=search_term_string",
+        },
+      },
+    ],
+  };
+
   return (
     <main className="bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(websiteStructuredData),
+        }}
+      />
       {/* Hero */}
       <section className="bg-green-50">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:flex lg:items-center lg:justify-between lg:px-8 lg:py-28">

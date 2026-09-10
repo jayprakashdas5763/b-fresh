@@ -1,7 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CartItem from "@/components/cart-item";
+
+export const metadata: Metadata = {
+    title: "Shopping Cart",
+    description: "Review your selected B-Fresh products before checkout.",
+    robots: {
+        index: false,
+        follow: false,
+    },
+};
 
 export default async function CartPage() {
     const supabase = await createClient();

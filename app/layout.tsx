@@ -1,34 +1,66 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "B-Fresh | Fresh & Healthy Delivered",
-  description:
-    "Shop fresh dairy products, healthy food, groceries, and daily essentials from B-Fresh.",
+    metadataBase: new URL("http://localhost:3000"),
+
+    title: {
+        default: "B-Fresh | Fresh Food & Dairy Delivered",
+        template: "%s | B-Fresh",
+    },
+
+    description:
+        "B-Fresh delivers fresh food and quality dairy products to your doorstep in Odisha.",
+
+    keywords: [
+        "B-Fresh",
+        "fresh food",
+        "dairy products",
+        "milk delivery",
+        "fresh milk",
+        "online grocery",
+        "Odisha",
+    ],
+
+    authors: [
+        {
+            name: "B-Fresh",
+        },
+    ],
+
+    creator: "B-Fresh",
+    publisher: "B-Fresh",
+
+    robots: {
+        index: true,
+        follow: true,
+    },
+
+    openGraph: {
+        type: "website",
+        siteName: "B-Fresh",
+        title: "B-Fresh | Fresh Food & Dairy Delivered",
+        description:
+            "Fresh food and quality dairy products delivered to your doorstep.",
+        locale: "en_IN",
+    },
+
+    twitter: {
+        card: "summary_large_image",
+        title: "B-Fresh | Fresh Food & Dairy Delivered",
+        description:
+            "Fresh food and quality dairy products delivered to your doorstep.",
+    },
 };
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full">{children}</body>
-    </html>
-  );
+    return (
+        <html lang="en">
+            <body>{children}</body>
+        </html>
+    );
 }

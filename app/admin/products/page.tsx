@@ -43,7 +43,6 @@ export default function ProductsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState("all");
     const [filterStatus, setFilterStatus] = useState("all");
-    const [filterStock, setFilterStock] = useState("all");
 
     const [name, setName] = useState("");
     const [categoryId, setCategoryId] = useState("");
@@ -61,6 +60,20 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState("");
+
+    function resetForm() {
+        setEditingId(null);
+        setName("");
+        setCategoryId("");
+        setDescription("");
+        setPrice("");
+        setCompareAtPrice("");
+        setUnit("piece");
+        setStockQuantity("");
+        setSku("");
+        setImageFile(null);
+        setImagePreview("");
+    }
 
     function createSlug(value: string) {
         return value
@@ -207,6 +220,7 @@ export default function ProductsPage() {
                 return;
             }
         }
+
         const productName = name.trim();
         const productPrice = Number(price);
         const productStock = Number(stockQuantity);
@@ -229,14 +243,17 @@ export default function ProductsPage() {
             return;
         }
 
-        if (!Number.isInteger(productStock) || productStock < 0) {
-            setMessage("Enter a valid stock quantity.");
-            return;
+        if (!editingId) {
+            if (!Number.isInteger(productStock) || productStock < 0) {
+                setMessage("Enter a valid stock quantity.");
+                return;
+            }
         }
 
         if (
             productComparePrice !== null &&
-            (!Number.isFinite(productComparePrice) || productComparePrice < 0)
+            (!Number.isFinite(productComparePrice) ||
+                productComparePrice < 0)
         ) {
             setMessage("Enter a valid original price.");
             return;
@@ -265,8 +282,7 @@ export default function ProductsPage() {
                             price: productPrice,
                             compare_at_price: productComparePrice,
                             unit: unit.trim() || "piece",
-                            stock_quantity: productStock,
-                            sku: normalizedSku  || null,
+                            sku: normalizedSku || null,
                             updated_at: new Date().toISOString(),
                         })
                         .eq("id", editingId)
@@ -291,7 +307,7 @@ export default function ProductsPage() {
                             compare_at_price: productComparePrice,
                             unit: unit.trim() || "piece",
                             stock_quantity: productStock,
-                            sku: normalizedSku  || null,
+                            sku: normalizedSku || null,
                         })
                         .select("id")
                         .single();
@@ -350,13 +366,14 @@ export default function ProductsPage() {
                     }
 
                     if (existingImage) {
-                        const { error: imageUpdateError } = await supabase
-                            .from("product_images")
-                            .update({
-                                image_url: publicUrl,
-                                alt_text: productName,
-                            })
-                            .eq("id", existingImage.id);
+                        const { error: imageUpdateError } =
+                            await supabase
+                                .from("product_images")
+                                .update({
+                                    image_url: publicUrl,
+                                    alt_text: productName,
+                                })
+                                .eq("id", existingImage.id);
 
                         if (imageUpdateError) {
                             throw new Error(imageUpdateError.message);
@@ -380,7 +397,23 @@ export default function ProductsPage() {
                             }
                         }
                     } else {
-                        const { error: imageInsertError } = await supabase
+                        const { error: imageInsertError } =
+                            await supabase
+                                .from("product_images")
+                                .insert({
+                                    product_id: product.id,
+                                    image_url: publicUrl,
+                                    alt_text: productName,
+                                    sort_order: 0,
+                                });
+
+                        if (imageInsertError) {
+                            throw new Error(imageInsertError.message);
+                        }
+                    }
+                } else {
+                    const { error: imageInsertError } =
+                        await supabase
                             .from("product_images")
                             .insert({
                                 product_id: product.id,
@@ -389,20 +422,6 @@ export default function ProductsPage() {
                                 sort_order: 0,
                             });
 
-                        if (imageInsertError) {
-                            throw new Error(imageInsertError.message);
-                        }
-                    }
-                } else {
-                    const { error: imageInsertError } = await supabase
-                        .from("product_images")
-                        .insert({
-                            product_id: product.id,
-                            image_url: publicUrl,
-                            alt_text: productName,
-                            sort_order: 0,
-                        });
-
                     if (imageInsertError) {
                         throw new Error(imageInsertError.message);
                     }
@@ -410,39 +429,30 @@ export default function ProductsPage() {
             }
 
             const wasEditing = Boolean(editingId);
+            const hadImage = Boolean(imageFile);
 
-            setEditingId(null);
-            setName("");
-            setCategoryId("");
-            setDescription("");
-            setPrice("");
-            setCompareAtPrice("");
-            setUnit("piece");
-            setStockQuantity("");
-            setSku("");
-            setImageFile(null);
-            setImagePreview("");
+            resetForm();
 
             setMessage(
                 wasEditing
-                    ? imageFile
+                    ? hadImage
                         ? "Product and image updated successfully."
                         : "Product updated successfully."
-                    : imageFile
-                        ? "Product and image created successfully."
-                        : "Product created successfully."
+                    : hadImage
+                      ? "Product and image created successfully."
+                      : "Product created successfully."
             );
 
             await loadData();
         } catch (error) {
             console.error(error);
 
-            // Remove uploaded image if a later step failed.
             if (uploadedPath) {
-                await supabase.storage.from("product-images").remove([uploadedPath]);
+                await supabase.storage
+                    .from("product-images")
+                    .remove([uploadedPath]);
             }
 
-            // Remove product if image processing failed after product creation.
             if (createdProductId) {
                 await supabase
                     .from("products")
@@ -453,7 +463,7 @@ export default function ProductsPage() {
             setMessage(
                 error instanceof Error
                     ? error.message
-                    : "Something went wrong while creating the product."
+                    : "Something went wrong while saving the product."
             );
         } finally {
             setSaving(false);
@@ -524,21 +534,7 @@ export default function ProductsPage() {
             (filterStatus === "active" && product.is_active) ||
             (filterStatus === "inactive" && !product.is_active);
 
-        const matchesStock =
-            filterStock === "all" ||
-            (filterStock === "in-stock" && product.stock_quantity > 5) ||
-            (filterStock === "low-stock" &&
-                product.stock_quantity > 0 &&
-                product.stock_quantity <= 5) ||
-            (filterStock === "out-of-stock" &&
-                product.stock_quantity === 0);
-
-        return (
-            matchesSearch &&
-            matchesCategory &&
-            matchesStatus &&
-            matchesStock
-        );
+        return matchesSearch && matchesCategory && matchesStatus;
     });
 
     return (
@@ -548,38 +544,16 @@ export default function ProductsPage() {
                     <h1 className="text-3xl font-bold">Products</h1>
 
                     <p className="mt-2 text-gray-600">
-                        Manage the B-Fresh product catalog and inventory.
+                        Manage the B-Fresh product catalog.
                     </p>
                 </div>
 
+                {/* Product form */}
                 <section className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
-                    <div className="mb-5 flex items-center justify-between gap-3">
+                    <div className="mb-5">
                         <h2 className="text-xl font-semibold">
                             {editingId ? "Edit Product" : "Add Product"}
                         </h2>
-
-                        {editingId && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setEditingId(null);
-                                    setName("");
-                                    setCategoryId("");
-                                    setDescription("");
-                                    setPrice("");
-                                    setCompareAtPrice("");
-                                    setUnit("piece");
-                                    setStockQuantity("");
-                                    setSku("");
-                                    setImageFile(null);
-                                    setImagePreview("");
-                                    setMessage("");
-                                }}
-                                className="text-sm font-medium text-gray-500 hover:text-gray-900"
-                            >
-                                Cancel
-                            </button>
-                        )}
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -594,14 +568,19 @@ export default function ProductsPage() {
 
                         <select
                             value={categoryId}
-                            onChange={(event) => setCategoryId(event.target.value)}
+                            onChange={(event) =>
+                                setCategoryId(event.target.value)
+                            }
                             required
                             className="w-full rounded-lg border p-3"
                         >
                             <option value="">Select category</option>
 
                             {categories.map((category) => (
-                                <option key={category.id} value={category.id}>
+                                <option
+                                    key={category.id}
+                                    value={category.id}
+                                >
                                     {category.name}
                                 </option>
                             ))}
@@ -609,7 +588,9 @@ export default function ProductsPage() {
 
                         <textarea
                             value={description}
-                            onChange={(event) => setDescription(event.target.value)}
+                            onChange={(event) =>
+                                setDescription(event.target.value)
+                            }
                             placeholder="Product description"
                             rows={4}
                             className="w-full rounded-lg border p-3"
@@ -621,7 +602,9 @@ export default function ProductsPage() {
                                 min="0"
                                 step="0.01"
                                 value={price}
-                                onChange={(event) => setPrice(event.target.value)}
+                                onChange={(event) =>
+                                    setPrice(event.target.value)
+                                }
                                 placeholder="Selling price (₹)"
                                 required
                                 className="w-full rounded-lg border p-3"
@@ -632,7 +615,9 @@ export default function ProductsPage() {
                                 min="0"
                                 step="0.01"
                                 value={compareAtPrice}
-                                onChange={(event) => setCompareAtPrice(event.target.value)}
+                                onChange={(event) =>
+                                    setCompareAtPrice(event.target.value)
+                                }
                                 placeholder="Original price (optional)"
                                 className="w-full rounded-lg border p-3"
                             />
@@ -640,27 +625,46 @@ export default function ProductsPage() {
                             <input
                                 type="text"
                                 value={unit}
-                                onChange={(event) => setUnit(event.target.value)}
+                                onChange={(event) =>
+                                    setUnit(event.target.value)
+                                }
                                 placeholder="Unit (e.g. 1 litre, 500 g, piece)"
                                 required
                                 className="w-full rounded-lg border p-3"
                             />
 
-                            <input
-                                type="number"
-                                min="0"
-                                step="1"
-                                value={stockQuantity}
-                                onChange={(event) => setStockQuantity(event.target.value)}
-                                placeholder="Stock quantity"
-                                required
-                                className="w-full rounded-lg border p-3"
-                            />
+                            <div>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    step="1"
+                                    value={stockQuantity}
+                                    onChange={(event) =>
+                                        setStockQuantity(event.target.value)
+                                    }
+                                    placeholder="Stock quantity"
+                                    required={!editingId}
+                                    disabled={Boolean(editingId)}
+                                    className={`w-full rounded-lg border p-3 ${
+                                        editingId
+                                            ? "!cursor-not-allowed !bg-gray-200 !text-gray-500"
+                                            : "bg-white text-gray-900"
+                                    }`}
+                                />
+
+                                {editingId && (
+                                    <p className="mt-1 text-xs text-gray-500">
+                                        Stock is managed from Inventory.
+                                    </p>
+                                )}
+                            </div>
 
                             <input
                                 type="text"
                                 value={sku}
-                                onChange={(event) => setSku(event.target.value)}
+                                onChange={(event) =>
+                                    setSku(event.target.value)
+                                }
                                 placeholder="SKU (optional)"
                                 className="w-full rounded-lg border p-3"
                             />
@@ -683,7 +687,9 @@ export default function ProductsPage() {
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp"
                                 onChange={(event) =>
-                                    handleImageChange(event.target.files?.[0] ?? null)
+                                    handleImageChange(
+                                        event.target.files?.[0] ?? null
+                                    )
                                 }
                                 className="hidden"
                             />
@@ -709,27 +715,45 @@ export default function ProductsPage() {
                                     productId={editingId}
                                     productName={name}
                                     images={
-                                        products.find((product) => product.id === editingId)
-                                            ?.product_images ?? []
+                                        products.find(
+                                            (product) =>
+                                                product.id === editingId
+                                        )?.product_images ?? []
                                     }
                                     onImagesChanged={loadData}
                                 />
                             )}
                         </div>
 
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
-                        >
-                            {saving
-                                ? editingId
-                                    ? "Updating product..."
-                                    : "Creating product..."
-                                : editingId
-                                    ? "Update Product"
-                                    : "Add Product"}
-                        </button>
+                        <div className="flex flex-wrap gap-3">
+                            <button
+                                type="submit"
+                                disabled={saving}
+                                className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
+                            >
+                                {saving
+                                    ? editingId
+                                        ? "Updating product..."
+                                        : "Creating product..."
+                                    : editingId
+                                      ? "Update Product"
+                                      : "Add Product"}
+                            </button>
+
+                            {editingId && (
+                                <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() => {
+                                        resetForm();
+                                        setMessage("");
+                                    }}
+                                    className="rounded-lg border border-gray-300 px-5 py-3 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                >
+                                    Cancel
+                                </button>
+                            )}
+                        </div>
                     </form>
 
                     {message && (
@@ -739,13 +763,17 @@ export default function ProductsPage() {
                     )}
                 </section>
 
+                {/* Product list */}
                 <section className="rounded-2xl bg-white p-6 shadow-sm">
                     <h2 className="mb-5 text-xl font-semibold">Products</h2>
-                    <div className="mb-6 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+
+                    <div className="mb-6 grid gap-3 md:grid-cols-3">
                         <input
                             type="text"
                             value={searchTerm}
-                            onChange={(event) => setSearchTerm(event.target.value)}
+                            onChange={(event) =>
+                                setSearchTerm(event.target.value)
+                            }
                             placeholder="Search by name or SKU"
                             className="rounded-lg border border-gray-300 p-3 text-gray-900"
                         />
@@ -760,7 +788,10 @@ export default function ProductsPage() {
                             <option value="all">All Categories</option>
 
                             {categories.map((category) => (
-                                <option key={category.id} value={category.id}>
+                                <option
+                                    key={category.id}
+                                    value={category.id}
+                                >
                                     {category.name}
                                 </option>
                             ))}
@@ -777,23 +808,12 @@ export default function ProductsPage() {
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
-
-                        <select
-                            value={filterStock}
-                            onChange={(event) =>
-                                setFilterStock(event.target.value)
-                            }
-                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
-                        >
-                            <option value="all">All Stock</option>
-                            <option value="in-stock">In Stock</option>
-                            <option value="low-stock">Low Stock</option>
-                            <option value="out-of-stock">Out of Stock</option>
-                        </select>
                     </div>
 
                     {loading ? (
-                        <p className="text-gray-500">Loading products...</p>
+                        <p className="text-gray-500">
+                            Loading products...
+                        </p>
                     ) : filteredProducts.length === 0 ? (
                         <div className="rounded-xl border border-dashed p-8 text-center">
                             <p className="font-medium text-gray-900">
@@ -809,7 +829,6 @@ export default function ProductsPage() {
                                         setSearchTerm("");
                                         setFilterCategory("all");
                                         setFilterStatus("all");
-                                        setFilterStock("all");
                                     }}
                                     className="mt-3 text-sm font-medium text-green-700 hover:text-green-800"
                                 >
@@ -820,28 +839,32 @@ export default function ProductsPage() {
                     ) : (
                         <div className="space-y-3">
                             {filteredProducts.map((product) => (
-
                                 <div
                                     key={product.id}
                                     className="rounded-xl border p-4"
                                 >
                                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                                        {/* Product info */}
                                         <div className="flex min-w-0 gap-4">
-                                            {/* Product image */}
                                             <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
-                                                {product.product_images?.length > 0 ? (
+                                                {product.product_images
+                                                    ?.length > 0 ? (
                                                     <img
                                                         src={
-                                                            [...product.product_images].sort(
+                                                            [
+                                                                ...product.product_images,
+                                                            ].sort(
                                                                 (a, b) =>
-                                                                    a.sort_order - b.sort_order
+                                                                    a.sort_order -
+                                                                    b.sort_order
                                                             )[0]?.image_url
                                                         }
                                                         alt={
-                                                            [...product.product_images].sort(
+                                                            [
+                                                                ...product.product_images,
+                                                            ].sort(
                                                                 (a, b) =>
-                                                                    a.sort_order - b.sort_order
+                                                                    a.sort_order -
+                                                                    b.sort_order
                                                             )[0]?.alt_text ??
                                                             product.name
                                                         }
@@ -849,27 +872,35 @@ export default function ProductsPage() {
                                                     />
                                                 ) : (
                                                     <div className="flex h-full items-center justify-center">
-                                                        <span className="text-2xl">🥛</span>
+                                                        <span className="text-2xl">
+                                                            🥛
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Product details */}
                                             <div className="min-w-0">
                                                 <h3 className="font-semibold text-gray-900">
                                                     {product.name}
                                                 </h3>
 
                                                 <p className="text-sm text-gray-500">
-                                                    {getCategoryName(product.category_id)}
+                                                    {getCategoryName(
+                                                        product.category_id
+                                                    )}
                                                 </p>
 
                                                 <p className="mt-1 text-gray-900">
-                                                    ₹{Number(product.price).toFixed(2)} / {product.unit}
+                                                    ₹
+                                                    {Number(
+                                                        product.price
+                                                    ).toFixed(2)}{" "}
+                                                    / {product.unit}
                                                 </p>
 
                                                 <p className="text-sm text-gray-600">
-                                                    Stock: {product.stock_quantity}
+                                                    Stock:{" "}
+                                                    {product.stock_quantity}
                                                 </p>
 
                                                 {product.sku && (
@@ -879,21 +910,25 @@ export default function ProductsPage() {
                                                 )}
 
                                                 <span
-                                                    className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${product.is_active
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-gray-100 text-gray-600"
-                                                        }`}
+                                                    className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${
+                                                        product.is_active
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-gray-100 text-gray-600"
+                                                    }`}
                                                 >
-                                                    {product.is_active ? "Active" : "Inactive"}
+                                                    {product.is_active
+                                                        ? "Active"
+                                                        : "Inactive"}
                                                 </span>
                                             </div>
                                         </div>
 
-                                        {/* Actions */}
                                         <div className="flex flex-wrap gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => startEdit(product)}
+                                                onClick={() =>
+                                                    startEdit(product)
+                                                }
                                                 className="rounded-lg border px-3 py-2 text-sm"
                                             >
                                                 Edit
@@ -901,15 +936,21 @@ export default function ProductsPage() {
 
                                             <button
                                                 type="button"
-                                                onClick={() => toggleProduct(product)}
+                                                onClick={() =>
+                                                    toggleProduct(product)
+                                                }
                                                 className="rounded-lg border px-3 py-2 text-sm"
                                             >
-                                                {product.is_active ? "Deactivate" : "Activate"}
+                                                {product.is_active
+                                                    ? "Deactivate"
+                                                    : "Activate"}
                                             </button>
 
                                             <button
                                                 type="button"
-                                                onClick={() => deleteProduct(product.id)}
+                                                onClick={() =>
+                                                    deleteProduct(product.id)
+                                                }
                                                 className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600"
                                             >
                                                 Delete

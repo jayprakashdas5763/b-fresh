@@ -1,13 +1,24 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import OrderReceipt from "@/components/order-receipt";
 import CancelOrderButton from "@/components/cancel-order-button";
+import ReviewForm from "@/components/review-form";
 
 type OrderPageProps = {
   params: Promise<{
     id: string;
   }>;
+};
+
+export const metadata: Metadata = {
+  title: "Order Details",
+  description: "View your B-Fresh order details, payment status, delivery information, and receipt.",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default async function OrderPage({
@@ -49,6 +60,7 @@ export default async function OrderPage({
       created_at,
       order_items (
         id,
+        product_id,
         product_name,
         unit,
         unit_price,
@@ -240,6 +252,27 @@ export default async function OrderPage({
               ))}
             </div>
           </section>
+
+          {order.status === "delivered" && (
+            <section className="mt-8">
+              <h2 className="text-xl font-semibold text-gray-900">
+                Share Your Experience
+              </h2>
+
+              <div className="mt-4 space-y-4">
+                {orderItems.map((item) =>
+                  item.product_id ? (
+                    <ReviewForm
+                      key={item.id}
+                      orderId={order.id}
+                      productId={item.product_id}
+                      productName={item.product_name}
+                    />
+                  ) : null
+                )}
+              </div>
+            </section>
+          )}
 
           {/* Total */}
           <section className="mt-8 ml-auto max-w-sm">

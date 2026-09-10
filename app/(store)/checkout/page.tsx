@@ -1,7 +1,17 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CheckoutForm from "@/components/checkout-form";
+
+export const metadata: Metadata = {
+  title: "Checkout",
+  description: "Complete your B-Fresh order and choose your delivery address.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 type CheckoutPageProps = {
   searchParams: Promise<{

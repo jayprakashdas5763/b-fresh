@@ -73,8 +73,31 @@ export default async function ProductsPage({
     console.error("Products error:", productsError.message);
   }
 
+  const productListStructuredData =
+    !categorySlug && !searchQuery && products && products.length > 0
+      ? {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "B-Fresh Products",
+        itemListElement: products.map((product, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: product.name,
+          url: `/products/${encodeURIComponent(product.slug)}`,
+        })),
+      }
+      : null;
+
   return (
     <main className="min-h-screen bg-white">
+      {productListStructuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(productListStructuredData),
+          }}
+        />
+      )}
       {/* Header */}
       <section className="border-b bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -155,8 +178,8 @@ export default async function ProductsPage({
                   : "/products"
               }
               className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${!categorySlug
-                  ? "bg-green-700 text-white"
-                  : "border bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-green-700 text-white"
+                : "border bg-white text-gray-700 hover:bg-gray-50"
                 }`}
             >
               All Products
@@ -176,8 +199,8 @@ export default async function ProductsPage({
                   key={category.id}
                   href={`/products?${query.toString()}`}
                   className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${category.slug === categorySlug
-                      ? "bg-green-700 text-white"
-                      : "border bg-white text-gray-700 hover:bg-gray-50"
+                    ? "bg-green-700 text-white"
+                    : "border bg-white text-gray-700 hover:bg-gray-50"
                     }`}
                 >
                   {category.name}
