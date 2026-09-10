@@ -67,6 +67,7 @@ export default async function CartPage() {
         products (
           id,
           name,
+          slug,
           price,
           unit,
           stock_quantity,
@@ -234,6 +235,7 @@ export default async function CartPage() {
                                     <CartItem
                                         key={item.id}
                                         itemId={item.id}
+                                        productSlug={product.slug}
                                         name={product.name}
                                         price={product.price}
                                         unit={product.unit}

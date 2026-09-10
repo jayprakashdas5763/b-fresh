@@ -29,36 +29,38 @@ export const metadata: Metadata = {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  const { data: categories } = await supabase
-    .from("categories")
-    .select("id, name, slug, description, image_url")
-    .eq("is_active", true)
-    .order("name")
-    .limit(6);
+  const [{ data: categories }, { data: products }] =
+    await Promise.all([
+      supabase
+        .from("categories")
+        .select("id, name, slug, description, image_url")
+        .eq("is_active", true)
+        .order("name")
+        .limit(6),
 
-  const { data: products } = await supabase
-    .from("products")
-    .select(
-      `
-      id,
-      name,
-      slug,
-      description,
-      price,
-      compare_at_price,
-      unit,
-      stock_quantity,
-      is_active,
-      product_images (
-        image_url,
-        alt_text,
-        sort_order
-      )
-    `
-    )
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(8);
+      supabase
+        .from("products")
+        .select(
+          `
+          id,
+          name,
+          slug,
+          description,
+          price,
+          compare_at_price,
+          unit,
+          stock_quantity,
+          product_images (
+            image_url,
+            alt_text,
+            sort_order
+          )
+        `
+        )
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(8),
+    ]);
 
   const websiteStructuredData = {
     "@context": "https://schema.org",

@@ -31,7 +31,7 @@ export default function SiteHeaderNav({
     };
 
     const linkClass = (href: string) =>
-        `rounded-lg px-3 py-2 transition ${isActive(href)
+        `min-h-11 rounded-lg px-3 py-2 transition ${isActive(href)
             ? "bg-gray-100 font-semibold text-gray-900"
             : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
         }`;
@@ -128,8 +128,7 @@ export default function SiteHeaderNav({
                 aria-label={menuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={menuOpen}
                 onClick={() => setMenuOpen((current) => !current)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 md:hidden"
-            >
+                className="min-h-11 min-w-11 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 md:hidden"            >
                 {menuOpen ? "Close" : "Menu"}
             </button>
 
@@ -200,7 +199,7 @@ export default function SiteHeaderNav({
                             <Link
                                 href="/admin"
                                 onClick={() => setMenuOpen(false)}
-                                className={`block rounded-lg px-3 py-2 font-semibold ${pathname === "/admin" || pathname.startsWith("/admin/")
+                                className={`block min-h-11 rounded-lg px-3 py-2 font-semibold ${pathname === "/admin" || pathname.startsWith("/admin/")
                                     ? "bg-green-800 text-white"
                                     : "bg-green-700 text-white"
                                     }`}
@@ -235,7 +234,7 @@ export default function SiteHeaderNav({
                             <form action={signOut}>
                                 <button
                                     type="submit"
-                                    className="block w-full rounded-lg px-3 py-2 text-left font-medium text-red-600 hover:bg-red-50"
+                                    className="block min-h-11 w-full rounded-lg px-3 py-2 text-left font-medium text-red-600 hover:bg-red-50"
                                 >
                                     Logout
                                 </button>

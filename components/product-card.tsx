@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import AddToCartButton from "@/components/add-to-cart-button";
 import WishlistButton from "@/components/wishlist-button";
 
@@ -28,21 +29,18 @@ type ProductCardProps = {
 export default function ProductCard({ product }: ProductCardProps) {
     const isOutOfStock = product.stock_quantity <= 0;
 
-    const sortedImages = [...(product.product_images ?? [])].sort(
-        (a, b) => a.sort_order - b.sort_order
-    );
-
-    const primaryImage = sortedImages[0];
-
+const primaryImage = product.product_images?.[0];
     return (
         <article className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
             <Link href={`/products/${encodeURIComponent(product.slug)}`}>
                 <div className="relative aspect-square overflow-hidden bg-gray-100">
                     {primaryImage ? (
-                        <img
+                        <Image
                             src={primaryImage.image_url}
                             alt={primaryImage.alt_text || product.name}
-                            className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                            fill
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                            className="object-cover transition duration-300 group-hover:scale-105"
                         />
                     ) : (
                         <div className="flex h-full w-full items-center justify-center">

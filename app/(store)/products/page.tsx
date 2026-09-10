@@ -6,6 +6,7 @@ type ProductsPageProps = {
   searchParams: Promise<{
     category?: string;
     q?: string;
+    page?: string;
   }>;
 };
 
@@ -13,8 +14,18 @@ export default async function ProductsPage({
   searchParams,
 }: ProductsPageProps) {
   const params = await searchParams;
+
   const categorySlug = params.category?.trim() || "";
   const searchQuery = params.q?.trim() || "";
+
+  const pageSize = 12;
+
+  const requestedPage = Number.parseInt(params.page || "1", 10);
+
+  const currentPage =
+    Number.isInteger(requestedPage) && requestedPage > 0
+      ? requestedPage
+      : 1;
 
   const supabase = await createClient();
 
@@ -32,31 +43,76 @@ export default async function ProductsPage({
     (category) => category.slug === categorySlug
   );
 
+  /*
+   * Count matching products first.
+   * This lets us safely handle URLs such as /products?page=999.
+   */
+  let countQuery = supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("is_active", true);
+
+  if (selectedCategory) {
+    countQuery = countQuery.eq("category_id", selectedCategory.id);
+  }
+
+  if (searchQuery) {
+    const escapedSearch = searchQuery.replace(/[%_]/g, "\\$&");
+
+    countQuery = countQuery.or(
+      `name.ilike.%${escapedSearch}%,sku.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`
+    );
+  }
+
+  const {
+    count: totalProducts,
+    error: countError,
+  } = await countQuery;
+
+  if (countError) {
+    console.error("Products count error:", countError.message);
+  }
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil((totalProducts ?? 0) / pageSize)
+  );
+
+  const safePage =
+    currentPage > totalPages ? totalPages : currentPage;
+
+  const from = (safePage - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  /*
+   * Fetch only the products for the current page.
+   */
   let productQuery = supabase
     .from("products")
-    .select(
-      `
-        id,
-        name,
-        slug,
-        description,
-        price,
-        compare_at_price,
-        unit,
-        stock_quantity,
-        is_active,
-        product_images (
-          image_url,
-          alt_text,
-          sort_order
-        )
-      `
-    )
+    .select(`
+      id,
+      name,
+      slug,
+      description,
+      price,
+      compare_at_price,
+      unit,
+      stock_quantity,
+      is_active,
+      product_images (
+        image_url,
+        alt_text,
+        sort_order
+      )
+    `)
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
   if (selectedCategory) {
-    productQuery = productQuery.eq("category_id", selectedCategory.id);
+    productQuery = productQuery.eq(
+      "category_id",
+      selectedCategory.id
+    );
   }
 
   if (searchQuery) {
@@ -67,26 +123,58 @@ export default async function ProductsPage({
     );
   }
 
-  const { data: products, error: productsError } = await productQuery;
+  const {
+    data: products,
+    error: productsError,
+  } = await productQuery.range(from, to);
 
   if (productsError) {
     console.error("Products error:", productsError.message);
   }
 
   const productListStructuredData =
-    !categorySlug && !searchQuery && products && products.length > 0
+    !categorySlug &&
+    !searchQuery &&
+    safePage === 1 &&
+    products &&
+    products.length > 0
       ? {
-        "@context": "https://schema.org",
-        "@type": "ItemList",
-        name: "B-Fresh Products",
-        itemListElement: products.map((product, index) => ({
-          "@type": "ListItem",
-          position: index + 1,
-          name: product.name,
-          url: `/products/${encodeURIComponent(product.slug)}`,
-        })),
-      }
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          name: "B-Fresh Products",
+          itemListElement: products.map((product, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: product.name,
+            url: `/products/${encodeURIComponent(product.slug)}`,
+          })),
+        }
       : null;
+
+  const previousPage = safePage - 1;
+  const nextPage = safePage + 1;
+
+  const buildPageUrl = (page: number) => {
+    const query = new URLSearchParams();
+
+    if (categorySlug) {
+      query.set("category", categorySlug);
+    }
+
+    if (searchQuery) {
+      query.set("q", searchQuery);
+    }
+
+    if (page > 1) {
+      query.set("page", String(page));
+    }
+
+    const queryString = query.toString();
+
+    return queryString
+      ? `/products?${queryString}`
+      : "/products";
+  };
 
   return (
     <main className="min-h-screen bg-white">
@@ -98,6 +186,7 @@ export default async function ProductsPage({
           }}
         />
       )}
+
       {/* Header */}
       <section className="border-b bg-gray-50">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -142,12 +231,16 @@ export default async function ProductsPage({
           />
 
           {categorySlug && (
-            <input type="hidden" name="category" value={categorySlug} />
+            <input
+              type="hidden"
+              name="category"
+              value={categorySlug}
+            />
           )}
 
           <button
             type="submit"
-            className="rounded-xl bg-green-700 px-6 py-3 font-medium text-white transition hover:bg-green-800"
+            className="rounded-xl bg-green-700 px-6 py-3 font-medium text-white hover:bg-green-800"
           >
             Search
           </button>
@@ -177,10 +270,11 @@ export default async function ProductsPage({
                   ? `/products?q=${encodeURIComponent(searchQuery)}`
                   : "/products"
               }
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${!categorySlug
-                ? "bg-green-700 text-white"
-                : "border bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
+                !categorySlug
+                  ? "bg-green-700 text-white"
+                  : "border bg-white text-gray-700 hover:bg-gray-50"
+              }`}
             >
               All Products
             </Link>
@@ -198,10 +292,11 @@ export default async function ProductsPage({
                 <Link
                   key={category.id}
                   href={`/products?${query.toString()}`}
-                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${category.slug === categorySlug
-                    ? "bg-green-700 text-white"
-                    : "border bg-white text-gray-700 hover:bg-gray-50"
-                    }`}
+                  className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
+                    category.slug === categorySlug
+                      ? "bg-green-700 text-white"
+                      : "border bg-white text-gray-700 hover:bg-gray-50"
+                  }`}
                 >
                   {category.name}
                 </Link>
@@ -221,18 +316,62 @@ export default async function ProductsPage({
           </h2>
 
           <p className="mt-1 text-sm text-gray-500">
-            {products?.length ?? 0}{" "}
-            {(products?.length ?? 0) === 1 ? "product" : "products"}
+            {totalProducts ?? 0}{" "}
+            {(totalProducts ?? 0) === 1
+              ? "product"
+              : "products"}
           </p>
         </div>
 
         {/* Products */}
         {products && products.length > 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                />
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <nav
+                className="mt-10 flex items-center justify-center gap-3"
+                aria-label="Product pagination"
+              >
+                {safePage > 1 ? (
+                  <Link
+                    href={buildPageUrl(previousPage)}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    ← Previous
+                  </Link>
+                ) : (
+                  <span className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-400">
+                    ← Previous
+                  </span>
+                )}
+
+                <span className="text-sm text-gray-600">
+                  Page {safePage} of {totalPages}
+                </span>
+
+                {safePage < totalPages ? (
+                  <Link
+                    href={buildPageUrl(nextPage)}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                  >
+                    Next →
+                  </Link>
+                ) : (
+                  <span className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-400">
+                    Next →
+                  </span>
+                )}
+              </nav>
+            )}
+          </>
         ) : (
           <div className="rounded-2xl border border-dashed p-12 text-center">
             <div className="text-5xl">🔎</div>

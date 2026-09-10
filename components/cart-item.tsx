@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 
 type CartItemProps = {
   itemId: string;
+  productSlug: string;
   name: string;
   price: number;
   unit: string;
@@ -16,6 +18,7 @@ type CartItemProps = {
 
 export default function CartItem({
   itemId,
+  productSlug,
   name,
   price,
   unit,
@@ -79,7 +82,10 @@ export default function CartItem({
     <div className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
       <div className="flex gap-4">
         {/* Product image */}
-        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+        <Link
+          href={`/products/${encodeURIComponent(productSlug)}?from=cart`} className="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-gray-100"
+          aria-label={`View ${name}`}
+        >
           {imageUrl ? (
             <img
               src={imageUrl}
@@ -91,11 +97,16 @@ export default function CartItem({
               <span className="text-3xl">🥛</span>
             </div>
           )}
-        </div>
+        </Link>
 
         {/* Product information */}
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-gray-900">{name}</h2>
+          <Link
+            href={`/products/${encodeURIComponent(productSlug)}?from=cart`}
+            className="font-semibold text-gray-900 hover:text-green-700"
+          >
+            {name}
+          </Link>
 
           <p className="mt-1 text-sm text-gray-500">
             ₹{Number(price).toFixed(2)} / {unit}

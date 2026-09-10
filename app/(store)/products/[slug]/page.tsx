@@ -9,6 +9,9 @@ type ProductPageProps = {
     params: Promise<{
         slug: string;
     }>;
+    searchParams: Promise<{
+        from?: string;
+    }>;
 };
 
 export async function generateMetadata({
@@ -67,11 +70,16 @@ export async function generateMetadata({
 
 export default async function ProductPage({
     params,
+    searchParams,
 }: ProductPageProps) {
     const { slug } = await params;
+    const { from } = await searchParams;
 
+    const backHref = from === "cart" ? "/cart" : "/products";
+    const backLabel = from === "cart"
+        ? "← Back to cart"
+        : "← Back to products";
     const supabase = await createClient();
-
     const { data: product, error } = await supabase
         .from("products")
         .select(
@@ -187,10 +195,10 @@ export default async function ProductPage({
 
             <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
                 <Link
-                    href="/products"
+                    href={backHref}
                     className="text-sm font-medium text-green-700 hover:text-green-800"
                 >
-                    ← Back to products
+                    {backLabel}
                 </Link>
 
                 <div className="mt-8 grid gap-10 lg:grid-cols-2">

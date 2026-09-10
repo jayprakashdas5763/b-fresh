@@ -20,34 +20,39 @@ export default async function SiteHeader() {
   };
 
   if (user) {
-    const { data: notifications, error } = await supabase.rpc(
-      "get_my_notifications"
-    );
+    const [
+      { data: notifications, error: notificationError },
+      { data: profile },
+      { data: cart },
+    ] = await Promise.all([
+      supabase.rpc("get_my_notifications"),
 
-    if (error) {
-      console.error("Notification count error:", error.message);
+      supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single(),
+
+      supabase
+        .from("carts")
+        .select("id, cart_items(quantity)")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+    ]);
+
+    if (notificationError) {
+      console.error(
+        "Notification count error:",
+        notificationError.message
+      );
     } else {
       unreadNotificationCount =
         (notifications as NotificationRow[] | null | undefined)?.filter(
           (notification) => !notification.is_read
         ).length ?? 0;
     }
-  }
-
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
 
     isAdmin = profile?.role === "admin";
-
-    const { data: cart } = await supabase
-      .from("carts")
-      .select("id, cart_items(quantity)")
-      .eq("user_id", user.id)
-      .maybeSingle();
 
     if (cart?.cart_items) {
       cartItemCount = cart.cart_items.reduce(
@@ -56,7 +61,6 @@ export default async function SiteHeader() {
       );
     }
   }
-
   async function signOut() {
     "use server";
 
