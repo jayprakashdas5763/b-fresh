@@ -146,8 +146,7 @@ export default function AdminProductImages({
             }
 
             setMessage(
-                `${files.length} image${
-                    files.length > 1 ? "s" : ""
+                `${files.length} image${files.length > 1 ? "s" : ""
                 } uploaded successfully.`
             );
 
@@ -250,9 +249,9 @@ export default function AdminProductImages({
                 reorderedImages[currentIndex],
                 reorderedImages[targetIndex],
             ] = [
-                reorderedImages[targetIndex],
-                reorderedImages[currentIndex],
-            ];
+                    reorderedImages[targetIndex],
+                    reorderedImages[currentIndex],
+                ];
 
             for (let index = 0; index < reorderedImages.length; index++) {
                 const image = reorderedImages[index];
@@ -378,12 +377,11 @@ export default function AdminProductImages({
                 </div>
 
                 <label
-                    className={`inline-flex cursor-pointer items-center rounded-lg px-4 py-2 text-sm font-medium text-white ${
-                        uploading ||
+                    className={`inline-flex cursor-pointer items-center rounded-lg px-4 py-2 text-sm font-medium text-white ${uploading ||
                         sortedImages.length >= MAX_IMAGES
-                            ? "cursor-not-allowed bg-gray-400"
-                            : "bg-black hover:bg-gray-800"
-                    }`}
+                        ? "cursor-not-allowed bg-gray-400"
+                        : "bg-black hover:bg-gray-800"
+                        }`}
                 >
                     {uploading ? "Uploading..." : "Add Images"}
 
@@ -393,6 +391,7 @@ export default function AdminProductImages({
                         multiple
                         disabled={
                             uploading ||
+                            actionId !== null ||
                             sortedImages.length >= MAX_IMAGES
                         }
                         onChange={handleUpload}
@@ -441,7 +440,8 @@ export default function AdminProductImages({
                                         <button
                                             type="button"
                                             disabled={
-                                                actionId === image.id
+                                                actionId !== null ||
+                                                index === 0
                                             }
                                             onClick={() =>
                                                 setPrimaryImage(
@@ -457,7 +457,7 @@ export default function AdminProductImages({
                                     <button
                                         type="button"
                                         disabled={
-                                            actionId === image.id ||
+                                            actionId !== null ||
                                             index === 0
                                         }
                                         onClick={() =>
@@ -474,10 +474,8 @@ export default function AdminProductImages({
                                     <button
                                         type="button"
                                         disabled={
-                                            actionId === image.id ||
-                                            index ===
-                                                sortedImages.length -
-                                                    1
+                                            actionId !== null ||
+                                            index === sortedImages.length - 1
                                         }
                                         onClick={() =>
                                             moveImage(
@@ -492,9 +490,7 @@ export default function AdminProductImages({
 
                                     <button
                                         type="button"
-                                        disabled={
-                                            actionId === image.id
-                                        }
+                                        disabled={actionId !== null}
                                         onClick={() =>
                                             deleteImage(image)
                                         }

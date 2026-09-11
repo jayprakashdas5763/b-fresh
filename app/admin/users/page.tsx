@@ -17,6 +17,7 @@ export default function UsersPage() {
 
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
+    const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
     const [message, setMessage] = useState("");
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
@@ -36,6 +37,10 @@ export default function UsersPage() {
         setLoading(false);
     }
     async function updateRole(user: AdminUser) {
+        if (updatingRoleId) {
+            return;
+        }
+
         const newRole =
             user.role === "admin" ? "customer" : "admin";
 
@@ -50,30 +55,42 @@ export default function UsersPage() {
             return;
         }
 
+        setUpdatingRoleId(user.id);
         setMessage("");
 
-        const { error } = await supabase.rpc("update_user_role", {
-            p_user_id: user.id,
-            p_role: newRole,
-        });
+        try {
+            const { error } = await supabase.rpc("update_user_role", {
+                p_user_id: user.id,
+                p_role: newRole,
+            });
 
-        if (error) {
-            setMessage(error.message);
-            return;
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            setUsers((current) =>
+                current.map((item) =>
+                    item.id === user.id
+                        ? { ...item, role: newRole }
+                        : item
+                )
+            );
+
+            setMessage(
+                `${user.full_name || user.email || "User"} is now ${newRole === "admin"
+                    ? "an administrator"
+                    : "a customer"
+                }.`
+            );
+        } catch (error) {
+            setMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to update the user's role."
+            );
+        } finally {
+            setUpdatingRoleId(null);
         }
-
-        setUsers((current) =>
-            current.map((item) =>
-                item.id === user.id
-                    ? { ...item, role: newRole }
-                    : item
-            )
-        );
-
-        setMessage(
-            `${user.full_name || user.email || "User"} is now ${newRole === "admin" ? "an administrator" : "a customer"
-            }.`
-        );
     }
     useEffect(() => {
         loadUsers();
@@ -303,8 +320,8 @@ export default function UsersPage() {
                                                 <div className="flex flex-wrap items-center gap-2">
                                                     <span
                                                         className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${user.role === "admin"
-                                                                ? "bg-blue-100 text-blue-700"
-                                                                : "bg-green-100 text-green-700"
+                                                            ? "bg-blue-100 text-blue-700"
+                                                            : "bg-green-100 text-green-700"
                                                             }`}
                                                     >
                                                         {user.role === "admin"
@@ -315,14 +332,22 @@ export default function UsersPage() {
                                                     <button
                                                         type="button"
                                                         onClick={() => updateRole(user)}
-                                                        className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium ${user.role === "admin"
+                                                        disabled={updatingRoleId !== null}
+                                                        className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium disabled:cursor-not-allowed disabled:opacity-50 ${user.role === "admin"
                                                                 ? "border-orange-300 text-orange-700 hover:bg-orange-50"
                                                                 : "border-blue-300 text-blue-700 hover:bg-blue-50"
                                                             }`}
                                                     >
-                                                        {user.role === "admin"
-                                                            ? "Make Customer"
-                                                            : "Make Admin"}
+                                                        {updatingRoleId === user.id ? (
+                                                            <span className="inline-flex items-center gap-1.5">
+                                                                <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                                                Updating...
+                                                            </span>
+                                                        ) : user.role === "admin" ? (
+                                                            "Make Customer"
+                                                        ) : (
+                                                            "Make Admin"
+                                                        )}
                                                     </button>
                                                 </div>
                                             </td>

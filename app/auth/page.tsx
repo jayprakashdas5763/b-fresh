@@ -157,7 +157,6 @@ export default function AuthPage() {
 
       router.push(destination);
       router.refresh();
-      router.refresh();
     } catch (err) {
       setError(
         err instanceof Error

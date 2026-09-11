@@ -59,6 +59,7 @@ export default function ProductsPage() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [actionProductId, setActionProductId] = useState<string | null>(null);
     const [message, setMessage] = useState("");
 
     function resetForm() {
@@ -439,8 +440,8 @@ export default function ProductsPage() {
                         ? "Product and image updated successfully."
                         : "Product updated successfully."
                     : hadImage
-                      ? "Product and image created successfully."
-                      : "Product created successfully."
+                        ? "Product and image created successfully."
+                        : "Product created successfully."
             );
 
             await loadData();
@@ -471,19 +472,33 @@ export default function ProductsPage() {
     }
 
     async function toggleProduct(product: Product) {
-        const { error } = await supabase
-            .from("products")
-            .update({
-                is_active: !product.is_active,
-            })
-            .eq("id", product.id);
+        if (actionProductId) return;
 
-        if (error) {
-            setMessage(error.message);
-            return;
+        setActionProductId(product.id);
+        setMessage("");
+
+        try {
+            const { error } = await supabase
+                .from("products")
+                .update({
+                    is_active: !product.is_active,
+                })
+                .eq("id", product.id);
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            await loadData();
+        } catch (error) {
+            setMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to update product status."
+            );
+        } finally {
+            setActionProductId(null);
         }
-
-        await loadData();
     }
 
     async function deleteProduct(id: string) {
@@ -491,20 +506,32 @@ export default function ProductsPage() {
             "Are you sure you want to delete this product?"
         );
 
-        if (!confirmed) return;
+        if (!confirmed || actionProductId) return;
 
-        const { error } = await supabase
-            .from("products")
-            .delete()
-            .eq("id", id);
+        setActionProductId(id);
+        setMessage("");
 
-        if (error) {
-            setMessage(error.message);
-            return;
+        try {
+            const { error } = await supabase
+                .from("products")
+                .delete()
+                .eq("id", id);
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            setMessage("Product deleted.");
+            await loadData();
+        } catch (error) {
+            setMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to delete product."
+            );
+        } finally {
+            setActionProductId(null);
         }
-
-        setMessage("Product deleted.");
-        await loadData();
     }
 
     function getCategoryName(categoryId: string | null) {
@@ -645,11 +672,10 @@ export default function ProductsPage() {
                                     placeholder="Stock quantity"
                                     required={!editingId}
                                     disabled={Boolean(editingId)}
-                                    className={`w-full rounded-lg border p-3 ${
-                                        editingId
-                                            ? "!cursor-not-allowed !bg-gray-200 !text-gray-500"
-                                            : "bg-white text-gray-900"
-                                    }`}
+                                    className={`w-full rounded-lg border p-3 ${editingId
+                                        ? "!cursor-not-allowed !bg-gray-200 !text-gray-500"
+                                        : "bg-white text-gray-900"
+                                        }`}
                                 />
 
                                 {editingId && (
@@ -736,8 +762,8 @@ export default function ProductsPage() {
                                         ? "Updating product..."
                                         : "Creating product..."
                                     : editingId
-                                      ? "Update Product"
-                                      : "Add Product"}
+                                        ? "Update Product"
+                                        : "Add Product"}
                             </button>
 
                             {editingId && (
@@ -910,11 +936,10 @@ export default function ProductsPage() {
                                                 )}
 
                                                 <span
-                                                    className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${
-                                                        product.is_active
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-gray-100 text-gray-600"
-                                                    }`}
+                                                    className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${product.is_active
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-gray-100 text-gray-600"
+                                                        }`}
                                                 >
                                                     {product.is_active
                                                         ? "Active"
@@ -926,34 +951,45 @@ export default function ProductsPage() {
                                         <div className="flex flex-wrap gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    startEdit(product)
-                                                }
-                                                className="rounded-lg border px-3 py-2 text-sm"
+                                                onClick={() => startEdit(product)}
+                                                disabled={actionProductId !== null}
+                                                className="rounded-lg border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                                             >
                                                 Edit
                                             </button>
 
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    toggleProduct(product)
-                                                }
-                                                className="rounded-lg border px-3 py-2 text-sm"
+                                                onClick={() => toggleProduct(product)}
+                                                disabled={actionProductId !== null}
+                                                className="rounded-lg border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                                             >
-                                                {product.is_active
-                                                    ? "Deactivate"
-                                                    : "Activate"}
+                                                {actionProductId === product.id ? (
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+                                                        {product.is_active ? "Deactivating..." : "Activating..."}
+                                                    </span>
+                                                ) : product.is_active ? (
+                                                    "Deactivate"
+                                                ) : (
+                                                    "Activate"
+                                                )}
                                             </button>
 
                                             <button
                                                 type="button"
-                                                onClick={() =>
-                                                    deleteProduct(product.id)
-                                                }
-                                                className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600"
+                                                onClick={() => deleteProduct(product.id)}
+                                                disabled={actionProductId !== null}
+                                                className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
                                             >
-                                                Delete
+                                                {actionProductId === product.id ? (
+                                                    <span className="inline-flex items-center gap-2">
+                                                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-200 border-t-red-600" />
+                                                        Deleting...
+                                                    </span>
+                                                ) : (
+                                                    "Delete"
+                                                )}
                                             </button>
                                         </div>
                                     </div>
