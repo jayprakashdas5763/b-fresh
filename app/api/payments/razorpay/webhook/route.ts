@@ -36,6 +36,12 @@ export async function POST(request: Request) {
     const signature = request.headers.get("x-razorpay-signature");
 
     const eventId = request.headers.get("x-razorpay-event-id");
+    if (!eventId) {
+      return NextResponse.json(
+        { error: "Missing Razorpay event ID." },
+        { status: 400 },
+      );
+    }
 
     if (!signature) {
       return NextResponse.json(
@@ -64,6 +70,32 @@ export async function POST(request: Request) {
 
     const payload = JSON.parse(rawBody);
     const event = payload?.event;
+
+    const { data: existingEvent, error: existingEventError } =
+      await supabaseAdmin
+        .from("order_payment_events")
+        .select("id")
+        .eq("event_id", eventId)
+        .maybeSingle();
+
+    if (existingEventError) {
+      console.error(
+        "Unable to check Razorpay webhook event:",
+        existingEventError,
+      );
+
+      return NextResponse.json(
+        { error: "Unable to validate webhook event." },
+        { status: 500 },
+      );
+    }
+
+    if (existingEvent) {
+      return NextResponse.json({
+        received: true,
+        alreadyProcessed: true,
+      });
+    }
 
     if (!event) {
       return NextResponse.json({
