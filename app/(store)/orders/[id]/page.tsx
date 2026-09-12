@@ -117,6 +117,8 @@ export default async function OrderPage({
             status,
             payment_method,
             payment_status,
+            razorpay_refund_id,
+            refund_status,
             subtotal,
             delivery_fee,
             discount_amount,
@@ -259,6 +261,8 @@ export default async function OrderPage({
               {canCancel && (
                 <CancelOrderButton
                   orderId={order.id}
+                  paymentMethod={order.payment_method}
+                  paymentStatus={order.payment_status}
                 />
               )}
             </div>
@@ -269,15 +273,15 @@ export default async function OrderPage({
         {isTerminalState ? (
           <section
             className={`mt-6 rounded-3xl border p-5 shadow-sm transition-colors sm:p-7 ${order.status === "cancelled"
-                ? "border-red-100 bg-red-50 dark:border-red-900/70 dark:bg-red-950/40"
-                : "border-purple-100 bg-purple-50 dark:border-purple-900/70 dark:bg-purple-950/40"
+              ? "border-red-100 bg-red-50 dark:border-red-900/70 dark:bg-red-950/40"
+              : "border-purple-100 bg-purple-50 dark:border-purple-900/70 dark:bg-purple-950/40"
               }`}
           >
             <div className="flex gap-4">
               <div
                 className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl ${order.status === "cancelled"
-                    ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
-                    : "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
+                  ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+                  : "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300"
                   }`}
               >
                 {order.status === "cancelled" ? "×" : "↻"}
@@ -286,8 +290,8 @@ export default async function OrderPage({
               <div>
                 <h2
                   className={`text-lg font-bold ${order.status === "cancelled"
-                      ? "text-red-900 dark:text-red-200"
-                      : "text-purple-900 dark:text-purple-200"
+                    ? "text-red-900 dark:text-red-200"
+                    : "text-purple-900 dark:text-purple-200"
                     }`}
                 >
                   {order.status === "cancelled"
@@ -297,8 +301,8 @@ export default async function OrderPage({
 
                 <p
                   className={`mt-1 text-sm leading-6 ${order.status === "cancelled"
-                      ? "text-red-700 dark:text-red-300"
-                      : "text-purple-700 dark:text-purple-300"
+                    ? "text-red-700 dark:text-red-300"
+                    : "text-purple-700 dark:text-purple-300"
                     }`}
                 >
                   {order.status === "cancelled"
@@ -346,8 +350,8 @@ export default async function OrderPage({
                       <div className="flex w-10 shrink-0 flex-col items-center">
                         <div
                           className={`relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold ${completed
-                              ? "bg-green-700 text-white dark:bg-green-600"
-                              : "bg-green-50 text-gray-400 ring-1 ring-green-100 dark:bg-green-950/60 dark:text-green-200/40 dark:ring-green-900"
+                            ? "bg-green-700 text-white dark:bg-green-600"
+                            : "bg-green-50 text-gray-400 ring-1 ring-green-100 dark:bg-green-950/60 dark:text-green-200/40 dark:ring-green-900"
                             }`}
                         >
                           {completed
@@ -358,9 +362,9 @@ export default async function OrderPage({
                         {!isLast && (
                           <div
                             className={`h-12 w-0.5 ${currentStepIndex >
-                                index
-                                ? "bg-green-600 dark:bg-green-500"
-                                : "bg-green-100 dark:bg-green-900"
+                              index
+                              ? "bg-green-600 dark:bg-green-500"
+                              : "bg-green-100 dark:bg-green-900"
                               }`}
                           />
                         )}
@@ -369,10 +373,10 @@ export default async function OrderPage({
                       <div className="pb-6 pl-4">
                         <p
                           className={`text-sm font-bold ${current
-                              ? "text-green-800 dark:text-lime-300"
-                              : completed
-                                ? "text-gray-800 dark:text-green-100"
-                                : "text-gray-400 dark:text-green-200/40"
+                            ? "text-green-800 dark:text-lime-300"
+                            : completed
+                              ? "text-gray-800 dark:text-green-100"
+                              : "text-gray-400 dark:text-green-200/40"
                             }`}
                         >
                           {step.label}
@@ -405,8 +409,8 @@ export default async function OrderPage({
                       <div className="min-w-0 flex-1 text-center">
                         <div
                           className={`mx-auto flex h-10 w-10 items-center justify-center rounded-full border-4 text-sm font-bold shadow-sm ${completed
-                              ? "border-[#fffdf7] bg-green-700 text-white dark:border-green-950/70 dark:bg-green-600"
-                              : "border-[#fffdf7] bg-green-50 text-gray-400 ring-1 ring-green-100 dark:border-green-950/70 dark:bg-green-950/60 dark:text-green-200/40 dark:ring-green-900"
+                            ? "border-[#fffdf7] bg-green-700 text-white dark:border-green-950/70 dark:bg-green-600"
+                            : "border-[#fffdf7] bg-green-50 text-gray-400 ring-1 ring-green-100 dark:border-green-950/70 dark:bg-green-950/60 dark:text-green-200/40 dark:ring-green-900"
                             }`}
                         >
                           {completed
@@ -416,10 +420,10 @@ export default async function OrderPage({
 
                         <p
                           className={`mt-3 text-xs font-bold ${current
-                              ? "text-green-800 dark:text-lime-300"
-                              : completed
-                                ? "text-gray-800 dark:text-green-100"
-                                : "text-gray-400 dark:text-green-200/40"
+                            ? "text-green-800 dark:text-lime-300"
+                            : completed
+                              ? "text-gray-800 dark:text-green-100"
+                              : "text-gray-400 dark:text-green-200/40"
                             }`}
                         >
                           {step.label}
@@ -433,9 +437,9 @@ export default async function OrderPage({
                       {!isLast && (
                         <div
                           className={`mt-5 h-0.5 w-8 shrink-0 ${currentStepIndex >
-                              index
-                              ? "bg-green-600 dark:bg-green-500"
-                              : "bg-green-100 dark:bg-green-900"
+                            index
+                            ? "bg-green-600 dark:bg-green-500"
+                            : "bg-green-100 dark:bg-green-900"
                             }`}
                         />
                       )}
@@ -519,13 +523,13 @@ export default async function OrderPage({
 
               <span
                 className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-xs font-bold ${order.payment_status === "paid"
-                    ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
-                    : order.payment_status ===
-                      "refunded"
-                      ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
-                      : order.payment_status === "failed"
-                        ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
-                        : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                  ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+                  : order.payment_status ===
+                    "refunded"
+                    ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                    : order.payment_status === "failed"
+                      ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                      : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                   }`}
               >
                 {order.payment_status === "paid"

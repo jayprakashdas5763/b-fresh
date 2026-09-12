@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import Razorpay from "razorpay";
-import { createClient } from "@/lib/supabase/server";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
@@ -11,6 +11,7 @@ export async function POST(request: Request) {
 
     if (!webhookSecret || !razorpayKeyId || !razorpayKeySecret) {
       console.error("Razorpay webhook is not configured.");
+
       return NextResponse.json(
         { error: "Webhook configuration is missing." },
         { status: 500 },
@@ -18,9 +19,7 @@ export async function POST(request: Request) {
     }
 
     /*
-     * IMPORTANT:
-     * Razorpay requires the RAW request body for signature validation.
-     * Do not call request.json() before this verification.
+     * Razorpay signature verification must use the raw request body.
      */
     const rawBody = await request.text();
 
@@ -46,7 +45,9 @@ export async function POST(request: Request) {
       receivedBuffer.length !== expectedBuffer.length ||
       !crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
     ) {
-      console.error("Invalid Razorpay webhook signature.");
+      console.error("Invalid Razorpay webhook signature.", {
+        eventId,
+      });
 
       return NextResponse.json(
         { error: "Invalid webhook signature." },
@@ -54,11 +55,7 @@ export async function POST(request: Request) {
       );
     }
 
-    /*
-     * We have now authenticated Razorpay.
-     */
     const payload = JSON.parse(rawBody);
-
     const event = payload?.event;
 
     if (!event) {
@@ -66,22 +63,205 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Ignore events we are not currently using.
+     * Payment events
      */
-    if (
-      event !== "order.paid" &&
-      event !== "payment.captured" &&
-      event !== "payment.failed"
-    ) {
+    if (event === "payment.failed") {
       return NextResponse.json({ received: true });
     }
 
-    const supabase = await createClient();
+    /*
+     * Refund events
+     */
+    if (event === "refund.processed" || event === "refund.failed") {
+      const refundEntity = payload?.payload?.refund?.entity;
+
+      const refundId =
+        typeof refundEntity?.id === "string" ? refundEntity.id : "";
+
+      const paymentId =
+        typeof refundEntity?.payment_id === "string"
+          ? refundEntity.payment_id
+          : "";
+
+      if (!refundId || !paymentId) {
+        console.error("Refund webhook missing refund/payment IDs.", {
+          event,
+          eventId,
+        });
+
+        return NextResponse.json(
+          { error: "Missing refund identifiers." },
+          { status: 400 },
+        );
+      }
+
+      const { data: order, error: orderLookupError } = await supabaseAdmin
+        .from("orders")
+        .select(
+          `
+              id,
+              status,
+              payment_status,
+              razorpay_payment_id,
+              razorpay_refund_id,
+              refund_status
+            `,
+        )
+        .eq("razorpay_payment_id", paymentId)
+        .maybeSingle();
+
+      if (orderLookupError) {
+        console.error(
+          "Unable to find order for Razorpay refund:",
+          orderLookupError,
+        );
+
+        return NextResponse.json(
+          { error: "Unable to reconcile refund." },
+          { status: 500 },
+        );
+      }
+
+      if (!order) {
+        console.error(
+          "No B-Fresh order found for Razorpay payment:",
+          paymentId,
+        );
+
+        return NextResponse.json(
+          { error: "Order not found for refund." },
+          { status: 404 },
+        );
+      }
+
+      /*
+       * Idempotency: ignore duplicate webhook delivery.
+       */
+      if (
+        order.razorpay_refund_id === refundId &&
+        order.refund_status ===
+          (event === "refund.processed" ? "processed" : "failed")
+      ) {
+        return NextResponse.json({
+          received: true,
+          alreadyProcessed: true,
+        });
+      }
+
+      /*
+       * REFUND PROCESSED
+       */
+      if (event === "refund.processed") {
+        /*
+         * Restore stock only if the order has not already been
+         * finalized as cancelled/refunded.
+         */
+        if (
+          order.payment_status !== "refunded" ||
+          order.status !== "cancelled"
+        ) {
+          const { data: items, error: itemsError } = await supabaseAdmin
+            .from("order_items")
+            .select("product_id, quantity")
+            .eq("order_id", order.id)
+            .not("product_id", "is", null);
+
+          if (itemsError) {
+            console.error("Unable to load order items for refund:", itemsError);
+
+            return NextResponse.json(
+              { error: "Unable to restore stock." },
+              { status: 500 },
+            );
+          }
+
+          for (const item of items ?? []) {
+            if (!item.product_id) {
+              continue;
+            }
+
+            const { error: stockError } = await supabaseAdmin.rpc(
+              "restore_product_stock",
+              {
+                p_product_id: item.product_id,
+                p_quantity: item.quantity,
+              },
+            );
+
+            if (stockError) {
+              console.error("Stock restoration failed:", stockError);
+
+              return NextResponse.json(
+                { error: "Unable to restore stock." },
+                { status: 500 },
+              );
+            }
+          }
+        }
+
+        const { error: updateError } = await supabaseAdmin
+          .from("orders")
+          .update({
+            status: "cancelled",
+            payment_status: "refunded",
+            refund_status: "processed",
+            razorpay_refund_id: refundId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", order.id);
+
+        if (updateError) {
+          console.error("Unable to finalize refunded order:", updateError);
+
+          return NextResponse.json(
+            {
+              error: "Unable to finalize refunded order.",
+            },
+            { status: 500 },
+          );
+        }
+
+        return NextResponse.json({
+          received: true,
+          refundProcessed: true,
+        });
+      }
+
+      /*
+       * REFUND FAILED
+       *
+       * Keep the order active and payment marked as paid.
+       */
+      const { error: failedUpdateError } = await supabaseAdmin
+        .from("orders")
+        .update({
+          refund_status: "failed",
+          razorpay_refund_id: refundId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", order.id);
+
+      if (failedUpdateError) {
+        console.error("Unable to record failed refund:", failedUpdateError);
+
+        return NextResponse.json(
+          {
+            error: "Unable to record refund failure.",
+          },
+          { status: 500 },
+        );
+      }
+
+      return NextResponse.json({
+        received: true,
+        refundFailed: true,
+      });
+    }
 
     /*
-     * payment.failed does not create a B-Fresh order.
+     * Payment/order events.
      */
-    if (event === "payment.failed") {
+    if (event !== "order.paid" && event !== "payment.captured") {
       return NextResponse.json({ received: true });
     }
 
@@ -96,6 +276,7 @@ export async function POST(request: Request) {
     if (!razorpayOrderId || !razorpayPaymentId) {
       console.error("Razorpay webhook missing order/payment IDs.", {
         event,
+        eventId,
       });
 
       return NextResponse.json(
@@ -105,16 +286,15 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Check whether this payment has already been processed.
-     *
-     * This makes the webhook safe when Razorpay retries the same
-     * event or when the Checkout handler already created the order.
+     * Check whether the payment was already processed by
+     * the browser verification route.
      */
-    const { data: existingOrder, error: existingOrderError } = await supabase
-      .from("orders")
-      .select("id, payment_status")
-      .eq("razorpay_order_id", razorpayOrderId)
-      .maybeSingle();
+    const { data: existingOrder, error: existingOrderError } =
+      await supabaseAdmin
+        .from("orders")
+        .select("id, payment_status")
+        .eq("razorpay_order_id", razorpayOrderId)
+        .maybeSingle();
 
     if (existingOrderError) {
       console.error(
@@ -136,8 +316,7 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Fetch the Razorpay Order to recover the metadata we stored
-     * when the Checkout Order was created.
+     * Recover order metadata from Razorpay.
      */
     const razorpay = new Razorpay({
       key_id: razorpayKeyId,
@@ -156,7 +335,7 @@ export async function POST(request: Request) {
 
     if (!addressId) {
       console.error(
-        "Razorpay webhook order is missing address_id metadata.",
+        "Razorpay order is missing address_id metadata.",
         razorpayOrderId,
       );
 
@@ -167,10 +346,9 @@ export async function POST(request: Request) {
     }
 
     /*
-     * Create the B-Fresh paid order using the same secure database
-     * validation used by the normal Checkout verification path.
+     * Create the B-Fresh paid order.
      */
-    const { data: orderId, error: createOrderError } = await supabase.rpc(
+    const { data: orderId, error: createOrderError } = await supabaseAdmin.rpc(
       "create_paid_order_from_cart",
       {
         p_address_id: addressId,
@@ -182,11 +360,10 @@ export async function POST(request: Request) {
 
     if (createOrderError) {
       /*
-       * The normal Checkout handler may have already created the
-       * order between our first database check and this RPC.
-       * Re-check before treating this as a failure.
+       * The browser verification route may have created
+       * the order at nearly the same time.
        */
-      const { data: processedOrder } = await supabase
+      const { data: processedOrder } = await supabaseAdmin
         .from("orders")
         .select("id, payment_status")
         .eq("razorpay_order_id", razorpayOrderId)
@@ -210,7 +387,9 @@ export async function POST(request: Request) {
       );
 
       return NextResponse.json(
-        { error: "Paid order reconciliation failed." },
+        {
+          error: "Paid order reconciliation failed.",
+        },
         { status: 500 },
       );
     }
