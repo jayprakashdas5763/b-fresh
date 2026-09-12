@@ -112,6 +112,20 @@ export async function POST(request: Request) {
       },
     });
 
+    await supabase.from("order_payment_events").insert({
+      order_id: order.id,
+      event_type: "refund.requested",
+      event_time: new Date().toISOString(),
+      amount: typeof refund.amount === "number" ? refund.amount / 100 : null,
+      currency: typeof refund.currency === "string" ? refund.currency : "INR",
+      razorpay_payment_id: order.razorpay_payment_id,
+      razorpay_refund_id: refund.id,
+      metadata: {
+        refund_status:
+          typeof refund.status === "string" ? refund.status : "pending",
+      },
+    });
+
     const refundStatus =
       typeof refund.status === "string" ? refund.status : "pending";
 

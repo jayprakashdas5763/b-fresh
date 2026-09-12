@@ -1,3 +1,4 @@
+import PaymentTimeline from "@/components/payment-timeline";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
@@ -117,6 +118,8 @@ export default async function OrderPage({
             status,
             payment_method,
             payment_status,
+            razorpay_order_id,
+            razorpay_payment_id,
             razorpay_refund_id,
             refund_status,
             subtotal,
@@ -150,6 +153,23 @@ export default async function OrderPage({
   if (error || !order) {
     notFound();
   }
+
+  const { data: paymentEvents } = await supabase
+    .from("order_payment_events")
+    .select(
+      `
+      id,
+      event_type,
+      event_time,
+      amount,
+      currency,
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_refund_id
+    `,
+    )
+    .eq("order_id", order.id)
+    .order("event_time", { ascending: true });
 
   const orderItems = order.order_items ?? [];
   const currentStepIndex = getCurrentStepIndex(order.status);
@@ -505,52 +525,174 @@ export default async function OrderPage({
 
               <div>
                 <h2 className="font-black text-gray-900 dark:text-white">
-                  Payment
+                  Payment Details
                 </h2>
 
                 <p className="text-xs text-gray-500 dark:text-green-200/60">
-                  Payment and order information
+                  Payment and transaction information
                 </p>
               </div>
             </div>
 
             <div className="mt-5 rounded-2xl bg-green-50/70 p-4 dark:bg-green-900/40">
-              <p className="font-bold capitalize text-gray-900 dark:text-white">
-                {order.payment_method === "cod"
-                  ? "Cash on Delivery"
-                  : order.payment_method}
-              </p>
+              <div className="space-y-4">
+                {/* Payment method */}
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-sm text-gray-500 dark:text-green-200/60">
+                    Payment Method
+                  </span>
 
-              <span
-                className={`mt-3 inline-flex rounded-full px-3 py-1.5 text-xs font-bold ${order.payment_status === "paid"
-                  ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
-                  : order.payment_status ===
-                    "refunded"
-                    ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
-                    : order.payment_status === "failed"
-                      ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
-                      : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                  }`}
-              >
-                {order.payment_status === "paid"
-                  ? "Payment Paid"
-                  : order.payment_status === "refunded"
-                    ? "Payment Refunded"
-                    : order.payment_status === "failed"
-                      ? "Payment Failed"
-                      : "Payment Pending"}
-              </span>
+                  <span className="text-right text-sm font-bold text-gray-900 dark:text-white">
+                    {order.payment_method === "cod"
+                      ? "Cash on Delivery"
+                      : "Razorpay"}
+                  </span>
+                </div>
 
-              <p className="mt-3 text-sm leading-5 text-gray-600 dark:text-green-200/70">
-                {order.payment_status === "paid"
-                  ? "Payment has been received."
-                  : order.payment_method === "cod"
-                    ? "Pay when your order is delivered."
-                    : "Payment is pending."}
-              </p>
+                {/* Payment status */}
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-sm text-gray-500 dark:text-green-200/60">
+                    Payment Status
+                  </span>
+
+                  <span
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold ${order.payment_status === "paid"
+                      ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+                      : order.payment_status === "refunded"
+                        ? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300"
+                        : order.payment_status === "failed"
+                          ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                          : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                      }`}
+                  >
+                    {order.payment_status === "paid"
+                      ? "Paid"
+                      : order.payment_status === "refunded"
+                        ? "Refunded"
+                        : order.payment_status === "failed"
+                          ? "Failed"
+                          : "Pending"}
+                  </span>
+                </div>
+
+                {/* Amount */}
+                <div className="flex items-start justify-between gap-4">
+                  <span className="text-sm text-gray-500 dark:text-green-200/60">
+                    {order.payment_status === "paid"
+                      ? "Amount Paid"
+                      : order.payment_method === "cod"
+                        ? "Amount Due"
+                        : "Amount"}
+                  </span>
+
+                  <span className="text-sm font-black text-green-800 dark:text-lime-300">
+                    ₹{Number(order.total_amount).toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Razorpay details */}
+                {order.payment_method === "razorpay" &&
+                  order.razorpay_order_id && (
+                    <>
+                      <div className="border-t border-green-100 pt-4 dark:border-green-900">
+                        <div className="space-y-4">
+                          {/* Razorpay Order ID */}
+                          <div>
+                            <p className="text-xs font-semibold text-gray-500 dark:text-green-200/60">
+                              Razorpay Order ID
+                            </p>
+
+                            <p className="mt-1 break-all font-mono text-xs text-gray-800 dark:text-green-100">
+                              {order.razorpay_order_id}
+                            </p>
+                          </div>
+
+                          {/* Payment ID */}
+                          {order.razorpay_payment_id && (
+                            <div>
+                              <p className="text-xs font-semibold text-gray-500 dark:text-green-200/60">
+                                Payment ID
+                              </p>
+
+                              <p className="mt-1 break-all font-mono text-xs text-gray-800 dark:text-green-100">
+                                {order.razorpay_payment_id}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Refund details */}
+                          {order.razorpay_refund_id && (
+                            <div className="border-t border-green-100 pt-4 dark:border-green-900">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-green-200/60">
+                                Refund ID
+                              </p>
+
+                              <p className="mt-1 break-all font-mono text-xs text-gray-800 dark:text-green-100">
+                                {order.razorpay_refund_id}
+                              </p>
+
+                              {order.refund_status && (
+                                <div className="mt-2">
+                                  <span
+                                    className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${order.refund_status === "processed"
+                                      ? "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300"
+                                      : order.refund_status === "failed"
+                                        ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                                        : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                                      }`}
+                                  >
+                                    Refund{" "}
+                                    {order.refund_status}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                {/* Informational note */}
+                <div className="border-t border-green-100 pt-4 dark:border-green-900">
+                  <p className="text-xs leading-5 text-gray-500 dark:text-green-200/60">
+                    {order.payment_status === "paid"
+                      ? "Your payment has been successfully received."
+                      : order.payment_status === "refunded"
+                        ? "Your payment has been refunded."
+                        : order.payment_method === "cod"
+                          ? "Payment will be collected when your order is delivered."
+                          : "Payment is being processed."}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
+
+        {order.payment_method === "razorpay" && (
+          <section className="mt-6 rounded-[2rem] border border-green-100 bg-[#fffdf7] p-5 shadow-sm dark:border-green-900/70 dark:bg-green-950/70 sm:p-7">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-lime-100 text-lg dark:bg-lime-950">
+                ↗
+              </div>
+
+              <div>
+                <h2 className="font-black text-gray-900 dark:text-white">
+                  Payment Timeline
+                </h2>
+
+                <p className="text-xs text-gray-500 dark:text-green-200/60">
+                  Payment and refund activity
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <PaymentTimeline events={paymentEvents ?? []} />
+            </div>
+          </section>
+        )}
 
         {/* Items */}
         <section className="mt-6 rounded-[2rem] border border-green-100 bg-[#fffdf7] p-5 shadow-sm transition-colors dark:border-green-900/70 dark:bg-green-950/70 sm:p-7">
