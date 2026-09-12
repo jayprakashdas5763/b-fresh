@@ -177,11 +177,8 @@ export default async function HomePage() {
         }}
       />
 
-      {/* =========================================================
-          HERO
-      ========================================================= */}
       <section className="relative overflow-hidden bg-[#071d12]">
-        {/* Full-width background artwork */}
+        {/* Hero artwork */}
         <div className="absolute inset-x-0 top-0 z-0">
           <div className="relative w-full">
             <Image
@@ -194,51 +191,50 @@ export default async function HomePage() {
               className="block h-auto w-full"
             />
 
-            {/* Desktop readability */}
+            {/* Desktop text readability */}
             <div
-              className="absolute inset-0 hidden bg-gradient-to-r from-[#071d12] via-[#071d12]/72 via-45% to-transparent lg:block"
+              className="absolute inset-0 hidden bg-gradient-to-r from-[#071d12]/95 via-[#071d12]/58 via-25% to-transparent lg:block"
               aria-hidden="true"
             />
 
-            {/* Mobile readability */}
+            {/* Mobile text readability */}
             <div
-              className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#071d12] via-[#071d12]/88 to-transparent lg:hidden"
+              className="absolute inset-x-0 bottom-0 h-[7%] bg-gradient-to-t from-[#071d12] via-[#071d12]/12 to-transparent lg:hidden"
               aria-hidden="true"
             />
 
-            {/* Bottom blend */}
+            {/* Soft transition into the hero background */}
             <div
-              className="absolute inset-x-0 bottom-0 h-[28%] bg-gradient-to-t from-[#071d12] to-transparent"
+              className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-[#071d12] to-transparent"
               aria-hidden="true"
             />
 
-            {/* Subtle image darkening */}
+            {/* Very subtle image contrast */}
             <div
-              className="absolute inset-0 bg-black/5"
+              className="absolute inset-0 bg-black/[0.07]"
               aria-hidden="true"
             />
           </div>
         </div>
-
         {/* Hero content */}
         <div className="relative z-10">
           <div
             className="
-              max-w-2xl
-              px-5
-              pb-12
-              pt-[0.7vw]
-              sm:mx-auto
-              sm:px-8
-              sm:pb-16
-              sm:pt-[38vw]
-              lg:mx-0
-              lg:pb-20
-              lg:pl-[max(2rem,calc((100vw-1280px)/2))]
-              lg:pr-8
-              lg:pt-36
-              xl:pl-[max(3rem,calc((100vw-1400px)/2))]
-            "
+        max-w-2xl
+        px-5
+        pb-7
+        pt-[0.7vw]
+        sm:mx-auto
+        sm:px-8
+        sm:pb-14
+        sm:pt-[38vw]
+        lg:mx-0
+        lg:pb-16
+        lg:pl-[max(2rem,calc((100vw-1280px)/2))]
+        lg:pr-8
+        lg:pt-32
+        xl:pl-[max(3rem,calc((100vw-1400px)/2))]
+      "
           >
             {/* Eyebrow */}
             <div className="inline-flex items-center gap-2 rounded-full border border-lime-300/45 bg-green-950/45 px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-lime-300 shadow-sm backdrop-blur-md sm:px-4 sm:text-xs">
@@ -247,9 +243,9 @@ export default async function HomePage() {
             </div>
 
             {/* Heading */}
-            <h1 className="mt-27 text-4xl font-black leading-[0.95] tracking-[-0.05em] text-white sm:mt-9 sm:text-5xl lg:mt-10 lg:text-6xl xl:text-[5rem]">
+            <h1 className="mt-8 text-4xl font-black leading-[0.95] tracking-[-0.05em] text-white sm:text-5xl lg:text-6xl xl:text-[5rem]">
               Fresh food
-              <span className="block text-lime-300">
+              <span className="block text-lime-500">
                 for a healthier
               </span>
               <span className="block">
@@ -259,7 +255,7 @@ export default async function HomePage() {
 
             {/* Supporting copy */}
             <p className="mt-5 max-w-xl text-sm leading-6 text-white/80 sm:text-base sm:leading-7 lg:text-lg lg:leading-8">
-              Fresh dairy, nutritious fruits & vegetables, healthy foods,
+              Fresh dairy, nutritious fruits &amp; vegetables, healthy foods,
               breakfast essentials, groceries and everyday needs — carefully
               selected and delivered closer to home.
             </p>
@@ -287,7 +283,7 @@ export default async function HomePage() {
             {/* Trust pills */}
             <div className="mt-5 flex flex-wrap gap-2">
               <span className="rounded-full border border-white/20 bg-black/15 px-3 py-1.5 text-[10px] font-bold text-white/90 backdrop-blur-sm sm:text-xs">
-                ✓ Fresh & nutritious
+                ✓ Fresh &amp; nutritious
               </span>
 
               <span className="rounded-full border border-white/20 bg-black/15 px-3 py-1.5 text-[10px] font-bold text-white/90 backdrop-blur-sm sm:text-xs">
@@ -331,21 +327,20 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
       {/* =========================================================
           BENEFITS STRIP
       ========================================================= */}
-      <section className="border-b border-green-100 bg-white dark:border-green-900 dark:bg-[#0a1b12]">
+      <section className="border-b border-green-100 bg-[#f1f7ec] dark:border-green-900 dark:bg-[#0a1b12]">
         <div className="mx-auto grid max-w-7xl sm:grid-cols-3">
           {benefits.map((benefit, index) => (
             <div
               key={benefit.number}
-              className={`group flex items-start gap-4 px-5 py-6 transition-colors hover:bg-green-50/70 dark:hover:bg-green-950/60 sm:px-7 sm:py-7 ${index > 0
+              className={`group flex items-start gap-4 px-5 py-5 transition-colors hover:bg-green-50/70 dark:hover:bg-green-950/60 sm:px-7 sm:py-7 ${index > 0
                 ? "border-t border-gray-100 dark:border-green-900 sm:border-l sm:border-t-0"
                 : ""
                 }`}
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-700 transition group-hover:scale-105 group-hover:bg-green-100 dark:bg-green-950 dark:text-lime-300 dark:group-hover:bg-green-900">
+              <div className="flex h-11 w-12 shrink-0 items-center justify-center rounded-2xl bg-green-50 text-green-700 transition group-hover:scale-105 group-hover:bg-green-100 dark:bg-green-950 dark:text-lime-300 dark:group-hover:bg-green-900">
                 {benefit.icon}
               </div>
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import PlaceOrderButton from "@/components/place-order-button";
+import RazorpayCheckout from "@/components/razorpay-checkout";
 
 type Address = {
     id: string;
@@ -22,6 +23,8 @@ type Address = {
 type Props = {
     addresses: Address[];
 };
+
+type PaymentMethod = "cod" | "razorpay";
 
 function LocationIcon() {
     return (
@@ -74,6 +77,24 @@ function NoteIcon() {
     );
 }
 
+function OnlinePaymentIcon() {
+    return (
+        <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            className="h-5 w-5"
+            aria-hidden="true"
+        >
+            <rect x="3" y="5" width="18" height="14" rx="2" />
+            <path d="M3 9h18" />
+            <path d="M7 14h4" />
+            <path d="M15 14h2" />
+        </svg>
+    );
+}
+
 export default function CheckoutForm({ addresses }: Props) {
     const router = useRouter();
 
@@ -86,6 +107,8 @@ export default function CheckoutForm({ addresses }: Props) {
     );
 
     const [customerNote, setCustomerNote] = useState("");
+    const [paymentMethod, setPaymentMethod] =
+        useState<PaymentMethod>("cod");
 
     function selectAddress(id: string) {
         setSelectedAddressId(id);
@@ -206,8 +229,7 @@ export default function CheckoutForm({ addresses }: Props) {
 
                                             {selected && (
                                                 <p className="mt-2 text-[11px] font-semibold text-green-700 dark:text-lime-300">
-                                                    ✓ This address will be used
-                                                    for delivery
+                                                    ✓ This address will be used for delivery
                                                 </p>
                                             )}
                                         </div>
@@ -260,14 +282,21 @@ export default function CheckoutForm({ addresses }: Props) {
                     </div>
                 </div>
 
-                <div className="p-5 sm:p-7">
-                    <div className="rounded-2xl border border-green-400 bg-green-50/70 p-4 shadow-sm dark:border-green-700 dark:bg-green-950/50">
+                <div className="space-y-3 p-5 sm:p-7">
+                    {/* COD */}
+                    <label
+                        className={`block cursor-pointer rounded-2xl border p-4 shadow-sm transition ${paymentMethod === "cod"
+                                ? "border-green-400 bg-green-50/70 dark:border-green-700 dark:bg-green-950/50"
+                                : "border-gray-200 bg-white hover:border-green-200 hover:bg-green-50/20 dark:border-green-900 dark:bg-green-950/30"
+                            }`}
+                    >
                         <div className="flex items-start gap-3">
                             <input
                                 type="radio"
-                                checked
-                                readOnly
-                                aria-label="Cash on Delivery"
+                                name="payment-method"
+                                value="cod"
+                                checked={paymentMethod === "cod"}
+                                onChange={() => setPaymentMethod("cod")}
                                 className="mt-1 h-4 w-4 accent-green-700"
                             />
 
@@ -288,7 +317,49 @@ export default function CheckoutForm({ addresses }: Props) {
                                 </p>
                             </div>
                         </div>
-                    </div>
+                    </label>
+
+                    {/* RAZORPAY */}
+                    <label
+                        className={`block cursor-pointer rounded-2xl border p-4 shadow-sm transition ${paymentMethod === "razorpay"
+                                ? "border-green-400 bg-green-50/70 dark:border-lime-500 dark:bg-green-950/50"
+                                : "border-gray-200 bg-white hover:border-green-200 hover:bg-green-50/20 dark:border-green-900 dark:bg-green-950/30"
+                            }`}
+                    >
+                        <div className="flex items-start gap-3">
+                            <input
+                                type="radio"
+                                name="payment-method"
+                                value="razorpay"
+                                checked={paymentMethod === "razorpay"}
+                                onChange={() =>
+                                    setPaymentMethod("razorpay")
+                                }
+                                className="mt-1 h-4 w-4 accent-green-700"
+                            />
+
+                            <div className="min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <p className="text-sm font-black text-gray-950 dark:text-white">
+                                        Pay Online
+                                    </p>
+
+                                    <span className="rounded-full bg-green-100 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-green-800 dark:bg-lime-950 dark:text-lime-300">
+                                        Razorpay
+                                    </span>
+                                </div>
+
+                                <p className="mt-1 text-xs leading-5 text-gray-600 dark:text-green-100/70 sm:text-sm">
+                                    Pay securely using UPI, cards and supported
+                                    online payment methods.
+                                </p>
+                            </div>
+
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-700 dark:bg-green-900/60 dark:text-lime-300">
+                                <OnlinePaymentIcon />
+                            </div>
+                        </div>
+                    </label>
                 </div>
             </section>
 
@@ -340,7 +411,7 @@ export default function CheckoutForm({ addresses }: Props) {
                 </div>
             </section>
 
-            {/* PLACE ORDER */}
+            {/* PLACE ORDER / PAY */}
             {addresses.length > 0 && (
                 <div className="rounded-[2rem] border border-green-200 bg-gradient-to-br from-green-50 to-lime-50 p-4 shadow-sm dark:border-green-800 dark:from-green-950/70 dark:to-[#102019] sm:p-5">
                     <div className="mb-4 flex items-start gap-3">
@@ -350,7 +421,9 @@ export default function CheckoutForm({ addresses }: Props) {
 
                         <div>
                             <p className="text-sm font-black text-green-950 dark:text-white">
-                                Ready to place your order?
+                                {paymentMethod === "cod"
+                                    ? "Ready to place your order?"
+                                    : "Ready for secure payment?"}
                             </p>
 
                             <p className="mt-0.5 text-xs leading-5 text-green-900/70 dark:text-green-100/65">
@@ -360,10 +433,17 @@ export default function CheckoutForm({ addresses }: Props) {
                         </div>
                     </div>
 
-                    <PlaceOrderButton
-                        addressId={selectedAddressId}
-                        customerNote={customerNote}
-                    />
+                    {paymentMethod === "cod" ? (
+                        <PlaceOrderButton
+                            addressId={selectedAddressId}
+                            customerNote={customerNote}
+                        />
+                    ) : (
+                        <RazorpayCheckout
+                            addressId={selectedAddressId}
+                            customerNote={customerNote}
+                        />
+                    )}
                 </div>
             )}
         </div>
