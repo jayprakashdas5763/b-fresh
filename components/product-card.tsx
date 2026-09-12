@@ -26,12 +26,6 @@ type ProductCardProps = {
   priority?: boolean;
 };
 
-type AddToCartButtonProps = {
-  productId: string;
-  stockQuantity: number;
-  compact?: boolean;
-};
-
 export default function ProductCard({
   product,
   priority = false,
@@ -55,14 +49,14 @@ export default function ProductCard({
     : 0;
 
   return (
-    <article className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm transition-all duration-300 sm:rounded-3xl hover:-translate-y-1 hover:border-green-200 hover:shadow-xl hover:shadow-green-900/10">
+    <article className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm transition-all duration-300 sm:rounded-3xl hover:-translate-y-1 hover:border-green-200 hover:shadow-xl hover:shadow-green-900/10 dark:border-green-900 dark:bg-green-950/70 dark:hover:border-green-700 dark:hover:shadow-black/30">
       {/* Product image */}
       <Link
         href={`/products/${encodeURIComponent(product.slug)}`}
         className="block"
         aria-label={`View ${product.name}`}
       >
-        <div className="relative aspect-[0.95] overflow-hidden bg-gradient-to-br from-green-50 via-white to-lime-50 sm:aspect-square">
+        <div className="relative aspect-[0.95] overflow-hidden bg-gradient-to-br from-green-50 via-white to-lime-50 dark:from-green-950 dark:via-green-900 dark:to-[#102019] sm:aspect-square">
           {primaryImage ? (
             <Image
               src={primaryImage.image_url}
@@ -75,7 +69,7 @@ export default function ProductCard({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-3xl shadow-inner sm:h-24 sm:w-24 sm:text-5xl">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-3xl shadow-inner dark:bg-green-900 sm:h-24 sm:w-24 sm:text-5xl">
                 🥛
               </div>
             </div>
@@ -96,11 +90,11 @@ export default function ProductCard({
           {/* Stock */}
           <div className="absolute bottom-2.5 left-2.5 sm:bottom-4 sm:left-4">
             {isOutOfStock ? (
-              <span className="inline-flex items-center rounded-full border border-white/70 bg-white/90 px-2 py-1 text-[9px] font-bold text-red-700 shadow-sm backdrop-blur sm:px-3 sm:py-1.5 sm:text-xs">
+              <span className="inline-flex items-center rounded-full border border-white/70 bg-white/90 px-2 py-1 text-[9px] font-bold text-red-700 shadow-sm backdrop-blur dark:border-red-900/70 dark:bg-red-950/90 dark:text-red-300 sm:px-3 sm:py-1.5 sm:text-xs">
                 Out of stock
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/90 px-2 py-1 text-[9px] font-bold text-green-700 shadow-sm backdrop-blur sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/70 bg-white/90 px-2 py-1 text-[9px] font-bold text-green-700 shadow-sm backdrop-blur dark:border-green-800 dark:bg-green-950/90 dark:text-lime-300 sm:gap-1.5 sm:px-3 sm:py-1.5 sm:text-xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                 In stock
               </span>
@@ -110,13 +104,13 @@ export default function ProductCard({
 
         {/* Product info */}
         <div className="p-3 sm:p-5 sm:pb-3">
-          <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-bold leading-5 text-gray-900 transition group-hover:text-green-700 sm:min-h-[3.5rem] sm:text-base sm:leading-7">
+          <h3 className="line-clamp-2 min-h-[2.75rem] text-sm font-bold leading-5 text-gray-900 transition group-hover:text-green-700 dark:text-white dark:group-hover:text-lime-300 sm:min-h-[3.5rem] sm:text-base sm:leading-7">
             {product.name}
           </h3>
 
           {/* Keep description on desktop, hide on small screens */}
           {product.description ? (
-            <p className="mt-1.5 hidden line-clamp-2 min-h-[3rem] text-sm leading-6 text-gray-500 sm:mt-2 sm:block">
+            <p className="mt-1.5 hidden line-clamp-2 min-h-[3rem] text-sm leading-6 text-gray-500 dark:text-gray-400 sm:mt-2 sm:block">
               {product.description}
             </p>
           ) : (
@@ -126,23 +120,23 @@ export default function ProductCard({
           <div className="mt-2.5 flex items-end justify-between gap-2 sm:mt-4 sm:gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 sm:gap-2">
-                <span className="text-base font-black tracking-tight text-gray-950 sm:text-xl">
+                <span className="text-base font-black tracking-tight text-gray-950 dark:text-white sm:text-xl">
                   ₹{Number(product.price).toFixed(0)}
                 </span>
 
                 {hasDiscount && (
-                  <span className="text-[10px] text-gray-400 line-through sm:text-sm">
+                  <span className="text-[10px] text-gray-400 line-through dark:text-gray-500 sm:text-sm">
                     ₹{Number(product.compare_at_price).toFixed(0)}
                   </span>
                 )}
               </div>
 
-              <p className="mt-0.5 text-[10px] font-medium text-gray-500 sm:mt-1 sm:text-xs">
+              <p className="mt-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400 sm:mt-1 sm:text-xs">
                 per {product.unit}
               </p>
             </div>
 
-            <span className="hidden shrink-0 rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700 sm:inline-flex sm:text-xs">
+            <span className="hidden shrink-0 rounded-full bg-green-50 px-2.5 py-1 text-[10px] font-bold text-green-700 dark:bg-green-900 dark:text-lime-300 sm:inline-flex sm:text-xs">
               Fresh
             </span>
           </div>

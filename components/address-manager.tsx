@@ -83,7 +83,9 @@ export default function AddressManager() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [updatingDefault, setUpdatingDefault] = useState<string | null>(null);
+  const [updatingDefault, setUpdatingDefault] = useState<string | null>(
+    null,
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [message, setMessage] = useState("");
@@ -94,10 +96,10 @@ export default function AddressManager() {
   const [fullName, setFullName] = useState(emptyForm.fullName);
   const [phone, setPhone] = useState(emptyForm.phone);
   const [addressLine1, setAddressLine1] = useState(
-    emptyForm.addressLine1
+    emptyForm.addressLine1,
   );
   const [addressLine2, setAddressLine2] = useState(
-    emptyForm.addressLine2
+    emptyForm.addressLine2,
   );
   const [landmark, setLandmark] = useState(emptyForm.landmark);
   const [city, setCity] = useState(emptyForm.city);
@@ -141,18 +143,18 @@ export default function AddressManager() {
       .from("addresses")
       .select(
         `
-        id,
-        label,
-        full_name,
-        phone,
-        address_line1,
-        address_line2,
-        landmark,
-        city,
-        state,
-        postal_code,
-        is_default
-      `
+                id,
+                label,
+                full_name,
+                phone,
+                address_line1,
+                address_line2,
+                landmark,
+                city,
+                state,
+                postal_code,
+                is_default
+            `,
       )
       .eq("user_id", user.id)
       .order("is_default", { ascending: false })
@@ -239,7 +241,7 @@ export default function AddressManager() {
         throw new Error("You must be logged in to manage addresses.");
       }
 
-      // Verify that B-Fresh delivers to this PIN code.
+      // Verify delivery availability.
       const {
         data: deliveryZones,
         error: deliveryZoneError,
@@ -250,7 +252,7 @@ export default function AddressManager() {
 
       if (deliveryZoneError) {
         throw new Error(
-          "Unable to verify delivery availability. Please try again."
+          "Unable to verify delivery availability. Please try again.",
         );
       }
 
@@ -259,12 +261,12 @@ export default function AddressManager() {
           zone.postal_codes
             .split(",")
             .map((pin: string) => pin.trim())
-            .includes(cleanPostalCode)
+            .includes(cleanPostalCode),
         ) ?? false;
 
       if (!isDeliverable) {
         throw new Error(
-          "Sorry, B-Fresh does not currently deliver to this PIN code."
+          "Sorry, B-Fresh does not currently deliver to this PIN code.",
         );
       }
 
@@ -323,7 +325,7 @@ export default function AddressManager() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to save address."
+          : "Unable to save address.",
       );
     } finally {
       setSaving(false);
@@ -369,7 +371,7 @@ export default function AddressManager() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to update the default address."
+          : "Unable to update the default address.",
       );
     } finally {
       setUpdatingDefault(null);
@@ -383,13 +385,13 @@ export default function AddressManager() {
 
     if (addresses.length === 1) {
       setError(
-        "You cannot delete your only saved address. Add another address first."
+        "You cannot delete your only saved address. Add another address first.",
       );
       return;
     }
 
     const confirmed = window.confirm(
-      `Are you sure you want to delete your ${address.label} address?`
+      `Are you sure you want to delete your ${address.label} address?`,
     );
 
     if (!confirmed) return;
@@ -416,10 +418,9 @@ export default function AddressManager() {
         throw new Error(deleteError.message);
       }
 
-      // Keep one address as default when the deleted address was default.
       if (address.is_default) {
         const remainingAddress = addresses.find(
-          (item) => item.id !== id
+          (item) => item.id !== id,
         );
 
         if (remainingAddress) {
@@ -437,7 +438,7 @@ export default function AddressManager() {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to delete address."
+          : "Unable to delete address.",
       );
     } finally {
       setDeletingId(null);
@@ -457,24 +458,27 @@ export default function AddressManager() {
       {/* Section intro */}
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-xs font-bold text-green-800">
+          <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-xs font-bold text-green-800 dark:bg-green-950 dark:text-lime-300">
             <LocationIcon />
             Delivery
           </div>
 
-          <h2 className="mt-3 text-2xl font-black tracking-tight text-gray-950 sm:text-3xl">
+          <h2 className="mt-3 text-2xl font-black tracking-tight text-gray-950 dark:text-white sm:text-3xl">
             Your addresses
           </h2>
 
-          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-gray-500">
-            Save your delivery addresses for faster and easier checkout.
+          <p className="mt-1.5 max-w-2xl text-sm leading-6 text-gray-500 dark:text-green-200/70">
+            Save your delivery addresses for faster and easier
+            checkout.
           </p>
         </div>
 
         {addresses.length > 0 && (
-          <div className="rounded-2xl bg-green-50 px-4 py-2.5 text-xs font-semibold text-green-800">
+          <div className="rounded-2xl bg-green-50 px-4 py-2.5 text-xs font-semibold text-green-800 dark:bg-green-950 dark:text-lime-300">
             {addresses.length}{" "}
-            {addresses.length === 1 ? "saved address" : "saved addresses"}
+            {addresses.length === 1
+              ? "saved address"
+              : "saved addresses"}
           </div>
         )}
       </div>
@@ -483,17 +487,21 @@ export default function AddressManager() {
         {/* Address form */}
         <div
           id="address-form"
-          className="scroll-mt-28 overflow-hidden rounded-3xl border border-green-100 bg-[#fffdf7] shadow-sm"
+          className="scroll-mt-28 overflow-hidden rounded-3xl border border-green-100 bg-[#fffdf7] shadow-sm dark:border-green-900/70 dark:bg-green-950/70"
         >
-          <div className="border-b border-green-100 bg-gradient-to-br from-green-50 to-lime-50 px-5 py-5 sm:px-6">
+          <div className="border-b border-green-100 bg-gradient-to-br from-green-50 to-lime-50 px-5 py-5 dark:border-green-900 dark:from-green-950 dark:to-[#102019] sm:px-6">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">
-                  {editingId ? "Update address" : "New address"}
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700 dark:text-lime-300">
+                  {editingId
+                    ? "Update address"
+                    : "New address"}
                 </p>
 
-                <h3 className="mt-1 text-xl font-black text-gray-950">
-                  {editingId ? "Edit Address" : "Add Address"}
+                <h3 className="mt-1 text-xl font-black text-gray-950 dark:text-white">
+                  {editingId
+                    ? "Edit Address"
+                    : "Add Address"}
                 </h3>
               </div>
 
@@ -502,7 +510,7 @@ export default function AddressManager() {
                   type="button"
                   onClick={resetForm}
                   disabled={saving}
-                  className="rounded-xl px-3 py-2 text-xs font-bold text-gray-600 transition hover:bg-white hover:text-gray-900 disabled:opacity-50"
+                  className="rounded-xl px-3 py-2 text-xs font-bold text-gray-600 transition hover:bg-white hover:text-gray-900 disabled:opacity-50 dark:text-green-200/70 dark:hover:bg-green-900 dark:hover:text-white"
                 >
                   Cancel
                 </button>
@@ -518,7 +526,7 @@ export default function AddressManager() {
             <div>
               <label
                 htmlFor="addressLabel"
-                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
               >
                 Address Type
               </label>
@@ -526,9 +534,11 @@ export default function AddressManager() {
               <select
                 id="addressLabel"
                 value={label}
-                onChange={(event) => setLabel(event.target.value)}
+                onChange={(event) =>
+                  setLabel(event.target.value)
+                }
                 disabled={saving}
-                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
               >
                 <option>Home</option>
                 <option>Work</option>
@@ -540,7 +550,7 @@ export default function AddressManager() {
             <div>
               <label
                 htmlFor="addressFullName"
-                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
               >
                 Full Name
               </label>
@@ -550,12 +560,14 @@ export default function AddressManager() {
                 type="text"
                 placeholder="Name for delivery"
                 value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
+                onChange={(event) =>
+                  setFullName(event.target.value)
+                }
                 maxLength={100}
                 required
                 disabled={saving}
                 autoComplete="name"
-                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
               />
             </div>
 
@@ -563,13 +575,13 @@ export default function AddressManager() {
             <div>
               <label
                 htmlFor="addressPhone"
-                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
               >
                 Phone Number
               </label>
 
-              <div className="flex overflow-hidden rounded-2xl border border-green-100 bg-white transition hover:border-green-200 focus-within:border-green-500 focus-within:ring-4 focus-within:ring-green-100">
-                <div className="flex items-center gap-1.5 border-r border-green-100 bg-green-50 px-3 text-sm font-bold text-green-800">
+              <div className="flex overflow-hidden rounded-2xl border border-green-100 bg-white transition hover:border-green-200 focus-within:border-green-500 focus-within:ring-4 focus-within:ring-green-100 dark:border-green-900 dark:bg-[#102019] dark:hover:border-green-700 dark:focus-within:border-lime-400 dark:focus-within:ring-green-950">
+                <div className="flex items-center gap-1.5 border-r border-green-100 bg-green-50 px-3 text-sm font-bold text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-lime-300">
                   <PhoneIcon />
                   +91
                 </div>
@@ -581,13 +593,15 @@ export default function AddressManager() {
                   placeholder="9876543210"
                   value={phone}
                   onChange={(event) =>
-                    handlePhoneChange(event.target.value)
+                    handlePhoneChange(
+                      event.target.value,
+                    )
                   }
                   maxLength={10}
                   required
                   disabled={saving}
                   autoComplete="tel"
-                  className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+                  className="min-w-0 flex-1 bg-transparent px-4 py-3 text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400 disabled:cursor-not-allowed dark:text-white dark:placeholder:text-green-400/60"
                 />
               </div>
             </div>
@@ -596,7 +610,7 @@ export default function AddressManager() {
             <div>
               <label
                 htmlFor="addressLine1"
-                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
               >
                 Address Line 1
               </label>
@@ -613,7 +627,7 @@ export default function AddressManager() {
                 required
                 disabled={saving}
                 autoComplete="street-address"
-                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
               />
             </div>
 
@@ -621,7 +635,7 @@ export default function AddressManager() {
             <div>
               <label
                 htmlFor="addressLine2"
-                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
               >
                 Address Line 2{" "}
                 <span className="font-normal normal-case text-gray-400">
@@ -639,7 +653,7 @@ export default function AddressManager() {
                 }
                 maxLength={200}
                 disabled={saving}
-                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
               />
             </div>
 
@@ -647,7 +661,7 @@ export default function AddressManager() {
             <div>
               <label
                 htmlFor="landmark"
-                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
               >
                 Landmark{" "}
                 <span className="font-normal normal-case text-gray-400">
@@ -665,7 +679,7 @@ export default function AddressManager() {
                 }
                 maxLength={150}
                 disabled={saving}
-                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
               />
             </div>
 
@@ -674,7 +688,7 @@ export default function AddressManager() {
               <div>
                 <label
                   htmlFor="city"
-                  className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                  className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
                 >
                   City
                 </label>
@@ -684,19 +698,21 @@ export default function AddressManager() {
                   type="text"
                   placeholder="City"
                   value={city}
-                  onChange={(event) => setCity(event.target.value)}
+                  onChange={(event) =>
+                    setCity(event.target.value)
+                  }
                   maxLength={100}
                   required
                   disabled={saving}
                   autoComplete="address-level2"
-                  className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="state"
-                  className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                  className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
                 >
                   State
                 </label>
@@ -706,12 +722,14 @@ export default function AddressManager() {
                   type="text"
                   placeholder="State"
                   value={state}
-                  onChange={(event) => setState(event.target.value)}
+                  onChange={(event) =>
+                    setState(event.target.value)
+                  }
                   maxLength={100}
                   required
                   disabled={saving}
                   autoComplete="address-level1"
-                  className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
                 />
               </div>
             </div>
@@ -720,7 +738,7 @@ export default function AddressManager() {
             <div>
               <label
                 htmlFor="postalCode"
-                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600"
+                className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-600 dark:text-green-100"
               >
                 PIN Code
               </label>
@@ -733,16 +751,19 @@ export default function AddressManager() {
                 placeholder="6-digit PIN code"
                 value={postalCode}
                 onChange={(event) =>
-                  handlePostalCodeChange(event.target.value)
+                  handlePostalCodeChange(
+                    event.target.value,
+                  )
                 }
                 required
                 disabled={saving}
                 autoComplete="postal-code"
-                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium tracking-wide text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
+                className="w-full rounded-2xl border border-green-100 bg-white px-4 py-3 text-sm font-medium tracking-wide text-gray-900 outline-none transition placeholder:text-gray-400 hover:border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-green-900 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:hover:border-green-700 dark:focus:border-lime-400 dark:focus:ring-green-950"
               />
 
-              <p className="mt-1.5 text-xs text-gray-400">
-                We'll check whether B-Fresh delivers to this PIN.
+              <p className="mt-1.5 text-xs text-gray-400 dark:text-green-200/50">
+                We'll check whether B-Fresh delivers to this
+                PIN.
               </p>
             </div>
 
@@ -750,12 +771,14 @@ export default function AddressManager() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-green-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-800 hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-green-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-green-800 hover:shadow-md disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 dark:bg-green-700 dark:hover:bg-green-600"
             >
               {saving ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                  {editingId ? "Updating address..." : "Saving address..."}
+                  {editingId
+                    ? "Updating address..."
+                    : "Saving address..."}
                 </>
               ) : editingId ? (
                 "Update Address"
@@ -769,9 +792,9 @@ export default function AddressManager() {
           {message && (
             <div
               role="status"
-              className="mx-5 mb-5 flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-3.5 text-sm font-medium text-green-800 sm:mx-6"
+              className="mx-5 mb-5 flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 px-4 py-3.5 text-sm font-medium text-green-800 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300 sm:mx-6"
             >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs text-white">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-600 text-xs text-white dark:bg-green-700">
                 ✓
               </span>
               <span>{message}</span>
@@ -781,9 +804,9 @@ export default function AddressManager() {
           {error && (
             <div
               role="alert"
-              className="mx-5 mb-5 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3.5 text-sm font-medium text-red-700 sm:mx-6"
+              className="mx-5 mb-5 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 px-4 py-3.5 text-sm font-medium text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300 sm:mx-6"
             >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-600 text-xs text-white dark:bg-red-700">
                 !
               </span>
               <span>{error}</span>
@@ -794,32 +817,32 @@ export default function AddressManager() {
         {/* Saved addresses */}
         <div>
           {loading ? (
-            <div className="rounded-3xl border border-green-100 bg-[#fffdf7] p-8 text-center shadow-sm">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-green-200 border-t-green-700" />
+            <div className="rounded-3xl border border-green-100 bg-[#fffdf7] p-8 text-center shadow-sm dark:border-green-900/70 dark:bg-green-950/70">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-green-100 dark:bg-green-900">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-green-200 border-t-green-700 dark:border-green-800 dark:border-t-lime-300" />
               </div>
 
-              <p className="mt-4 text-sm font-semibold text-gray-700">
+              <p className="mt-4 text-sm font-semibold text-gray-700 dark:text-green-100">
                 Loading your addresses...
               </p>
 
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-green-200/60">
                 Just a moment.
               </p>
             </div>
           ) : addresses.length === 0 ? (
-            <div className="rounded-3xl border border-dashed border-green-200 bg-[#fffdf7] px-6 py-12 text-center shadow-sm">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-green-100 text-green-700">
+            <div className="rounded-3xl border border-dashed border-green-200 bg-[#fffdf7] px-6 py-12 text-center shadow-sm dark:border-green-900 dark:bg-green-950/70">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-green-100 text-green-700 dark:bg-green-900 dark:text-lime-300">
                 <LocationIcon />
               </div>
 
-              <h3 className="mt-5 text-xl font-black text-gray-900">
+              <h3 className="mt-5 text-xl font-black text-gray-900 dark:text-white">
                 No saved addresses yet
               </h3>
 
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500">
-                Add your first delivery address and your next B-Fresh
-                checkout will be much faster.
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500 dark:text-green-200/70">
+                Add your first delivery address and your next
+                B-Fresh checkout will be much faster.
               </p>
             </div>
           ) : (
@@ -827,34 +850,31 @@ export default function AddressManager() {
               {addresses.map((address) => (
                 <article
                   key={address.id}
-                  className={`overflow-hidden rounded-3xl border bg-[#fffdf7] shadow-sm transition ${
-                    address.is_default
-                      ? "border-green-200 shadow-green-900/5"
-                      : "border-green-100 hover:border-green-200 hover:shadow-md"
-                  }`}
+                  className={`overflow-hidden rounded-3xl border bg-[#fffdf7] shadow-sm transition dark:bg-green-950/70 ${address.is_default
+                      ? "border-green-200 shadow-green-900/5 dark:border-green-700"
+                      : "border-green-100 hover:border-green-200 hover:shadow-md dark:border-green-900 dark:hover:border-green-700"
+                    }`}
                 >
                   {/* Card header */}
                   <div
-                    className={`flex items-center justify-between gap-3 border-b px-5 py-4 ${
-                      address.is_default
-                        ? "border-green-100 bg-green-50/80"
-                        : "border-green-100 bg-white/60"
-                    }`}
+                    className={`flex items-center justify-between gap-3 border-b px-5 py-4 ${address.is_default
+                        ? "border-green-100 bg-green-50/80 dark:border-green-900 dark:bg-green-950"
+                        : "border-green-100 bg-white/60 dark:border-green-900 dark:bg-green-950/40"
+                      }`}
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <div
-                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${
-                          address.is_default
+                        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${address.is_default
                             ? "bg-green-700 text-white"
-                            : "bg-green-100 text-green-700"
-                        }`}
+                            : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-lime-300"
+                          }`}
                       >
                         <HomeIcon />
                       </div>
 
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-black text-gray-900">
+                          <h3 className="font-black text-gray-900 dark:text-white">
                             {address.label}
                           </h3>
 
@@ -865,8 +885,9 @@ export default function AddressManager() {
                           )}
                         </div>
 
-                        <p className="mt-0.5 text-xs text-gray-500">
-                          {address.city}, {address.state}
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-green-200/60">
+                          {address.city},{" "}
+                          {address.state}
                         </p>
                       </div>
                     </div>
@@ -874,12 +895,12 @@ export default function AddressManager() {
 
                   {/* Address body */}
                   <div className="p-5 sm:p-6">
-                    <div className="rounded-2xl bg-green-50/60 p-4">
-                      <p className="font-bold text-gray-900">
+                    <div className="rounded-2xl bg-green-50/60 p-4 dark:bg-green-900/30">
+                      <p className="font-bold text-gray-900 dark:text-white">
                         {address.full_name}
                       </p>
 
-                      <p className="mt-2 text-sm leading-6 text-gray-700">
+                      <p className="mt-2 text-sm leading-6 text-gray-700 dark:text-green-100/80">
                         {address.address_line1}
                         {address.address_line2
                           ? `, ${address.address_line2}`
@@ -888,13 +909,16 @@ export default function AddressManager() {
                           ? `, ${address.landmark}`
                           : ""}
                         <br />
-                        {address.city}, {address.state} -{" "}
+                        {address.city},{" "}
+                        {address.state} -{" "}
                         {address.postal_code}
                       </p>
 
-                      <div className="mt-3 flex items-center gap-2 text-xs font-medium text-gray-600">
+                      <div className="mt-3 flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-green-200/70">
                         <PhoneIcon />
-                        <span>+91 {address.phone}</span>
+                        <span>
+                          +91 {address.phone}
+                        </span>
                       </div>
                     </div>
 
@@ -904,15 +928,19 @@ export default function AddressManager() {
                         <button
                           type="button"
                           onClick={() =>
-                            setDefaultAddress(address.id)
+                            setDefaultAddress(
+                              address.id,
+                            )
                           }
                           disabled={
-                            updatingDefault !== null ||
+                            updatingDefault !==
+                            null ||
                             deletingId !== null
                           }
-                          className="rounded-xl bg-green-50 px-3.5 py-2.5 text-xs font-bold text-green-800 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl bg-green-50 px-3.5 py-2.5 text-xs font-bold text-green-800 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-950 dark:text-lime-300 dark:hover:bg-green-900"
                         >
-                          {updatingDefault === address.id
+                          {updatingDefault ===
+                            address.id
                             ? "Setting..."
                             : "Make Default"}
                         </button>
@@ -920,26 +948,30 @@ export default function AddressManager() {
 
                       <button
                         type="button"
-                        onClick={() => startEdit(address)}
+                        onClick={() =>
+                          startEdit(address)
+                        }
                         disabled={
                           updatingDefault !== null ||
                           deletingId !== null ||
                           saving
                         }
-                        className="rounded-xl border border-green-100 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-700 transition hover:border-green-200 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-xl border border-green-100 bg-white px-3.5 py-2.5 text-xs font-bold text-gray-700 transition hover:border-green-200 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:border-green-700 dark:hover:bg-green-900"
                       >
                         Edit
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => deleteAddress(address.id)}
+                        onClick={() =>
+                          deleteAddress(address.id)
+                        }
                         disabled={
                           deletingId !== null ||
                           updatingDefault !== null ||
                           saving
                         }
-                        className="rounded-xl border border-red-100 bg-white px-3.5 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-xl border border-red-100 bg-white px-3.5 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/60"
                       >
                         {deletingId === address.id
                           ? "Deleting..."

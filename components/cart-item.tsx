@@ -65,7 +65,7 @@ function TrashIcon() {
 function Spinner() {
   return (
     <span
-      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-green-200 border-t-green-700"
+      className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-green-200 border-t-green-700 dark:border-green-800 dark:border-t-lime-300"
       aria-hidden="true"
     />
   );
@@ -145,15 +145,16 @@ export default function CartItem({
 
   return (
     <article
-      className={`relative px-3 py-3 sm:p-5 ${
-        loading ? "opacity-60" : ""
-      }`}
+      className={`relative px-3 py-3 transition-opacity sm:p-5 ${loading ? "opacity-60" : ""
+        }`}
     >
       <div className="flex gap-3 sm:gap-5">
         {/* Product image */}
         <Link
-          href={`/products/${encodeURIComponent(productSlug)}?from=cart`}
-          className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-green-50 to-lime-50 ring-1 ring-green-100 sm:h-28 sm:w-28 sm:rounded-2xl"
+          href={`/products/${encodeURIComponent(
+            productSlug,
+          )}?from=cart`}
+          className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-green-50 to-lime-50 ring-1 ring-green-100 dark:from-green-950 dark:to-green-900 dark:ring-green-900 sm:h-28 sm:w-28 sm:rounded-2xl"
           aria-label={`View ${name}`}
         >
           {imageUrl ? (
@@ -166,7 +167,9 @@ export default function CartItem({
             />
           ) : (
             <div className="flex h-full items-center justify-center">
-              <span className="text-2xl sm:text-4xl">🥛</span>
+              <span className="text-2xl sm:text-4xl">
+                🥛
+              </span>
             </div>
           )}
         </Link>
@@ -176,19 +179,21 @@ export default function CartItem({
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <Link
-                href={`/products/${encodeURIComponent(productSlug)}?from=cart`}
-                className="line-clamp-2 text-sm font-black leading-5 text-gray-950 transition hover:text-green-700 sm:text-base sm:leading-6"
+                href={`/products/${encodeURIComponent(
+                  productSlug,
+                )}?from=cart`}
+                className="line-clamp-2 text-sm font-black leading-5 text-gray-950 transition hover:text-green-700 dark:text-white dark:hover:text-lime-300 sm:text-base sm:leading-6"
               >
                 {name}
               </Link>
 
-              <p className="mt-0.5 text-[11px] font-medium text-gray-500 sm:mt-1 sm:text-sm">
+              <p className="mt-0.5 text-[11px] font-medium text-gray-500 dark:text-green-200/60 sm:mt-1 sm:text-sm">
                 ₹{Number(price).toFixed(2)} / {unit}
               </p>
             </div>
 
             {/* Desktop total */}
-            <p className="hidden shrink-0 text-base font-black text-gray-950 sm:block">
+            <p className="hidden shrink-0 text-base font-black text-gray-950 dark:text-white sm:block">
               ₹{itemTotal.toFixed(2)}
             </p>
           </div>
@@ -196,28 +201,32 @@ export default function CartItem({
           {/* Controls */}
           <div className="mt-2.5 flex items-center justify-between gap-2 sm:mt-4">
             <div
-              className="inline-flex items-center overflow-hidden rounded-lg border border-green-100 bg-green-50/60"
+              className="inline-flex items-center overflow-hidden rounded-lg border border-green-100 bg-green-50/60 dark:border-green-900 dark:bg-green-950/60"
               aria-label={`Quantity for ${name}`}
             >
               <button
                 type="button"
-                onClick={() => updateQuantity(quantity - 1)}
+                onClick={() =>
+                  updateQuantity(quantity - 1)
+                }
                 disabled={!canDecrease || loading}
-                className="flex h-8 w-8 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9"
+                className="flex h-8 w-8 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30 dark:text-green-200 dark:hover:bg-green-900 dark:hover:text-lime-300 sm:h-9 sm:w-9"
                 aria-label={`Decrease quantity of ${name}`}
               >
                 <MinusIcon />
               </button>
 
-              <span className="flex h-8 min-w-8 items-center justify-center border-x border-green-100 bg-white px-1.5 text-xs font-black text-gray-950 sm:h-9 sm:min-w-9">
+              <span className="flex h-8 min-w-8 items-center justify-center border-x border-green-100 bg-white px-1.5 text-xs font-black text-gray-950 dark:border-green-900 dark:bg-[#102019] dark:text-white sm:h-9 sm:min-w-9">
                 {loading ? <Spinner /> : quantity}
               </span>
 
               <button
                 type="button"
-                onClick={() => updateQuantity(quantity + 1)}
+                onClick={() =>
+                  updateQuantity(quantity + 1)
+                }
                 disabled={!canIncrease || loading}
-                className="flex h-8 w-8 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9"
+                className="flex h-8 w-8 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30 dark:text-green-200 dark:hover:bg-green-900 dark:hover:text-lime-300 sm:h-9 sm:w-9"
                 aria-label={`Increase quantity of ${name}`}
               >
                 <PlusIcon />
@@ -229,7 +238,7 @@ export default function CartItem({
               onClick={removeItem}
               disabled={loading}
               aria-label={`Remove ${name} from cart`}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-2 sm:py-1.5"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition hover:bg-red-50 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-300 dark:hover:bg-red-950/50 dark:hover:text-red-200 sm:h-auto sm:w-auto sm:gap-1.5 sm:px-2 sm:py-1.5"
             >
               <TrashIcon />
               <span className="hidden text-xs font-bold sm:inline">
@@ -240,29 +249,30 @@ export default function CartItem({
 
           {/* Mobile total */}
           <div className="mt-2.5 flex items-center justify-between sm:hidden">
-            <span className="text-[10px] font-medium text-gray-400">
+            <span className="text-[10px] font-medium text-gray-400 dark:text-green-300/50">
               Item total
             </span>
 
-            <span className="text-sm font-black text-gray-950">
+            <span className="text-sm font-black text-gray-950 dark:text-white">
               ₹{itemTotal.toFixed(2)}
             </span>
           </div>
 
           {error && (
-            <div className="mt-2 rounded-xl border border-red-100 bg-red-50 p-2.5 text-[11px] leading-5 text-red-700">
+            <div className="mt-2 rounded-xl border border-red-100 bg-red-50 p-2.5 text-[11px] leading-5 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
               {error}
             </div>
           )}
 
-          {stockQuantity > 0 && quantity === stockQuantity && (
-            <p className="mt-1.5 text-[9px] font-semibold text-amber-600">
-              Maximum available quantity selected.
-            </p>
-          )}
+          {stockQuantity > 0 &&
+            quantity === stockQuantity && (
+              <p className="mt-1.5 text-[9px] font-semibold text-amber-600 dark:text-amber-300">
+                Maximum available quantity selected.
+              </p>
+            )}
 
           {stockQuantity <= 0 && (
-            <p className="mt-1.5 text-[11px] font-bold text-red-600">
+            <p className="mt-1.5 text-[11px] font-bold text-red-600 dark:text-red-300">
               Currently out of stock.
             </p>
           )}

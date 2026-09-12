@@ -59,28 +59,28 @@ export default function AdminOrdersPage() {
         const { data, error } = await supabase
             .from("orders")
             .select(`
-        id,
-        order_number,
-        user_id,
-        status,
-        payment_method,
-        payment_status,
-        subtotal,
-        delivery_fee,
-        discount_amount,
-        total_amount,
-        shipping_full_name,
-        shipping_phone,
-        shipping_address_line1,
-        shipping_address_line2,
-        shipping_landmark,
-        shipping_city,
-        shipping_state,
-        shipping_postal_code,
-        customer_note,
-        admin_note,
-        created_at
-        `)
+                id,
+                order_number,
+                user_id,
+                status,
+                payment_method,
+                payment_status,
+                subtotal,
+                delivery_fee,
+                discount_amount,
+                total_amount,
+                shipping_full_name,
+                shipping_phone,
+                shipping_address_line1,
+                shipping_address_line2,
+                shipping_landmark,
+                shipping_city,
+                shipping_state,
+                shipping_postal_code,
+                customer_note,
+                admin_note,
+                created_at
+            `)
             .order("created_at", { ascending: false });
 
         if (error) {
@@ -149,12 +149,12 @@ export default function AdminOrdersPage() {
                 current.map((order) =>
                     order.id === orderId
                         ? {
-                            ...order,
-                            status,
-                            payment_status:
-                                updateData.payment_status ??
-                                order.payment_status,
-                        }
+                              ...order,
+                              status,
+                              payment_status:
+                                  updateData.payment_status ??
+                                  order.payment_status,
+                          }
                         : order
                 )
             );
@@ -202,17 +202,15 @@ export default function AdminOrdersPage() {
     });
 
     return (
-        <main className="min-h-screen bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-gray-50 px-4 py-8 transition-colors dark:bg-[#07140d] sm:px-6 lg:px-8">
             <div className="mx-auto max-w-7xl">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold text-gray-900">
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                             Orders
                         </h1>
 
-
-
-                        <p className="mt-2 text-gray-600">
+                        <p className="mt-2 text-gray-600 dark:text-gray-300">
                             Manage incoming B-Fresh orders.
                         </p>
                     </div>
@@ -223,20 +221,22 @@ export default function AdminOrdersPage() {
                             placeholder="Search order, customer, phone..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="rounded-lg border px-3 py-2 text-sm"
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
                         />
 
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="rounded-lg border px-3 py-2 text-sm"
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                         >
                             <option value="all">All statuses</option>
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
                             <option value="processing">Processing</option>
                             <option value="packed">Packed</option>
-                            <option value="out_for_delivery">Out for delivery</option>
+                            <option value="out_for_delivery">
+                                Out for delivery
+                            </option>
                             <option value="delivered">Delivered</option>
                             <option value="cancelled">Cancelled</option>
                             <option value="refunded">Refunded</option>
@@ -244,8 +244,10 @@ export default function AdminOrdersPage() {
 
                         <select
                             value={filterPaymentMethod}
-                            onChange={(e) => setFilterPaymentMethod(e.target.value)}
-                            className="rounded-lg border px-3 py-2 text-sm"
+                            onChange={(e) =>
+                                setFilterPaymentMethod(e.target.value)
+                            }
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                         >
                             <option value="all">All payment methods</option>
                             <option value="cod">COD</option>
@@ -254,8 +256,10 @@ export default function AdminOrdersPage() {
 
                         <select
                             value={filterPaymentStatus}
-                            onChange={(e) => setFilterPaymentStatus(e.target.value)}
-                            className="rounded-lg border px-3 py-2 text-sm"
+                            onChange={(e) =>
+                                setFilterPaymentStatus(e.target.value)
+                            }
+                            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                         >
                             <option value="all">All payment statuses</option>
                             <option value="pending">Pending</option>
@@ -265,46 +269,50 @@ export default function AdminOrdersPage() {
                         </select>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setSearchTerm("");
-                            setFilterStatus("all");
-                            setFilterPaymentMethod("all");
-                            setFilterPaymentStatus("all");
-                        }}
-                        className="text-sm font-medium text-green-700 hover:underline"
-                    >
-                        Clear filters
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSearchTerm("");
+                                setFilterStatus("all");
+                                setFilterPaymentMethod("all");
+                                setFilterPaymentStatus("all");
+                            }}
+                            className="text-sm font-medium text-green-700 hover:underline dark:text-lime-300"
+                        >
+                            Clear filters
+                        </button>
 
-                    <button
-                        type="button"
-                        onClick={loadOrders}
-                        disabled={loading}
-                        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                    >
-                        Refresh
-                    </button>
+                        <button
+                            type="button"
+                            onClick={loadOrders}
+                            disabled={loading}
+                            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50 dark:border-green-800 dark:bg-green-950/70 dark:text-green-100 dark:hover:bg-green-900"
+                        >
+                            {loading ? "Refreshing..." : "Refresh"}
+                        </button>
+                    </div>
                 </div>
 
                 {message && (
-                    <div className="mt-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+                    <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/50 dark:text-red-300">
                         {message}
                     </div>
                 )}
 
                 {loading ? (
-                    <div className="mt-8 rounded-2xl bg-white p-8 text-center">
-                        <p className="text-gray-600">Loading orders...</p>
+                    <div className="mt-8 rounded-2xl bg-white p-8 text-center dark:bg-green-950/70">
+                        <p className="text-gray-600 dark:text-green-200">
+                            Loading orders...
+                        </p>
                     </div>
                 ) : filteredOrders.length === 0 ? (
-                    <div className="mt-8 rounded-2xl border border-dashed bg-white p-10 text-center">
-                        <h2 className="text-xl font-semibold text-gray-900">
+                    <div className="mt-8 rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center dark:border-green-800 dark:bg-green-950/70">
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                             No orders yet
                         </h2>
 
-                        <p className="mt-2 text-gray-600">
+                        <p className="mt-2 text-gray-600 dark:text-gray-300">
                             New customer orders will appear here.
                         </p>
                     </div>
@@ -313,86 +321,88 @@ export default function AdminOrdersPage() {
                         {filteredOrders.map((order) => (
                             <section
                                 key={order.id}
-                                className="rounded-2xl bg-white p-6 shadow-sm"
+                                className="rounded-2xl border border-transparent bg-white p-6 shadow-sm dark:border-green-900/70 dark:bg-green-950/70 dark:shadow-black/10"
                             >
                                 <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                                    {/* Order info */}
                                     <div>
                                         <div className="flex flex-wrap items-center gap-3">
                                             <Link
                                                 href={`/admin/orders/${order.id}`}
-                                                className="text-xl font-semibold text-gray-900 hover:text-green-700"
+                                                className="text-xl font-semibold text-gray-900 hover:text-green-700 dark:text-white dark:hover:text-lime-300"
                                             >
                                                 Order #{order.order_number}
                                             </Link>
 
-                                            <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
+                                            <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800 dark:bg-yellow-950/60 dark:text-yellow-300">
                                                 {formatStatus(order.status)}
                                             </span>
 
-                                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                                            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-green-900 dark:text-green-100">
                                                 {order.payment_method.toUpperCase()}
                                             </span>
                                         </div>
 
-                                        <p className="mt-2 text-sm text-gray-500">
-                                            {new Date(order.created_at).toLocaleString(
-                                                "en-IN",
-                                                {
-                                                    dateStyle: "medium",
-                                                    timeStyle: "short",
-                                                }
-                                            )}
+                                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            {new Date(
+                                                order.created_at
+                                            ).toLocaleString("en-IN", {
+                                                dateStyle: "medium",
+                                                timeStyle: "short",
+                                            })}
                                         </p>
                                     </div>
 
-                                    {/* Status */}
                                     <div className="w-full lg:w-64">
-                                        <label className="block text-sm font-medium text-gray-700">
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-green-100">
                                             Update Status
                                         </label>
 
                                         <select
                                             value={order.status}
-                                            disabled={savingId === order.id}
+                                            disabled={
+                                                savingId === order.id
+                                            }
                                             onChange={(event) =>
                                                 updateStatus(
                                                     order.id,
                                                     event.target.value
                                                 )
                                             }
-                                            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
+                                            className="mt-2 w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:opacity-60 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                                         >
-                                            {ORDER_STATUSES.map((status) => (
-                                                <option key={status} value={status}>
-                                                    {formatStatus(status)}
-                                                </option>
-                                            ))}
+                                            {ORDER_STATUSES.map(
+                                                (status) => (
+                                                    <option
+                                                        key={status}
+                                                        value={status}
+                                                    >
+                                                        {formatStatus(status)}
+                                                    </option>
+                                                )
+                                            )}
                                         </select>
                                     </div>
                                 </div>
 
-                                <div className="mt-6 grid gap-6 border-t pt-6 lg:grid-cols-3">
-                                    {/* Customer */}
+                                <div className="mt-6 grid gap-6 border-t border-gray-200 pt-6 dark:border-green-900 lg:grid-cols-3">
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white">
                                             Customer
                                         </h3>
 
-                                        <p className="mt-2 text-sm leading-6 text-gray-600">
+                                        <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
                                             {order.shipping_full_name}
                                             <br />
                                             Phone: {order.shipping_phone}
                                         </p>
                                     </div>
 
-                                    {/* Address */}
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white">
                                             Delivery Address
                                         </h3>
 
-                                        <p className="mt-2 text-sm leading-6 text-gray-600">
+                                        <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
                                             {order.shipping_address_line1}
                                             {order.shipping_address_line2
                                                 ? `, ${order.shipping_address_line2}`
@@ -407,24 +417,29 @@ export default function AdminOrdersPage() {
                                         </p>
                                     </div>
 
-                                    {/* Amount */}
                                     <div>
-                                        <h3 className="font-semibold text-gray-900">
+                                        <h3 className="font-semibold text-gray-900 dark:text-white">
                                             Payment
                                         </h3>
 
-                                        <div className="mt-2 space-y-1 text-sm text-gray-600">
+                                        <div className="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">
                                             <div className="flex justify-between">
                                                 <span>Subtotal</span>
                                                 <span>
-                                                    ₹{Number(order.subtotal).toFixed(2)}
+                                                    ₹
+                                                    {Number(
+                                                        order.subtotal
+                                                    ).toFixed(2)}
                                                 </span>
                                             </div>
 
                                             <div className="flex justify-between">
                                                 <span>Delivery</span>
                                                 <span>
-                                                    ₹{Number(order.delivery_fee).toFixed(2)}
+                                                    ₹
+                                                    {Number(
+                                                        order.delivery_fee
+                                                    ).toFixed(2)}
                                                 </span>
                                             </div>
 
@@ -438,26 +453,33 @@ export default function AdminOrdersPage() {
                                                 </span>
                                             </div>
 
-                                            <div className="mt-2 flex justify-between border-t pt-2 font-semibold text-gray-900">
+                                            <div className="mt-2 flex justify-between border-t border-gray-200 pt-2 font-semibold text-gray-900 dark:border-green-900 dark:text-white">
                                                 <span>Total</span>
                                                 <span>
-                                                    ₹{Number(order.total_amount).toFixed(2)}
+                                                    ₹
+                                                    {Number(
+                                                        order.total_amount
+                                                    ).toFixed(2)}
                                                 </span>
                                             </div>
 
                                             <div className="pt-2">
-                                                <span className="text-sm text-gray-600">
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">
                                                     Payment status:
                                                 </span>{" "}
                                                 <span
-                                                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${order.payment_status === "paid"
-                                                            ? "bg-green-100 text-green-800"
-                                                            : order.payment_status === "failed"
-                                                                ? "bg-red-100 text-red-800"
-                                                                : order.payment_status === "refunded"
-                                                                    ? "bg-purple-100 text-purple-800"
-                                                                    : "bg-yellow-100 text-yellow-800"
-                                                        }`}
+                                                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                                                        order.payment_status ===
+                                                        "paid"
+                                                            ? "bg-green-100 text-green-800 dark:bg-green-950/70 dark:text-green-300"
+                                                            : order.payment_status ===
+                                                                "failed"
+                                                              ? "bg-red-100 text-red-800 dark:bg-red-950/70 dark:text-red-300"
+                                                              : order.payment_status ===
+                                                                  "refunded"
+                                                                ? "bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300"
+                                                                : "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/70 dark:text-yellow-300"
+                                                    }`}
                                                 >
                                                     {order.payment_status}
                                                 </span>
@@ -466,27 +488,28 @@ export default function AdminOrdersPage() {
                                     </div>
                                 </div>
 
-                                {(order.customer_note || order.admin_note) && (
-                                    <div className="mt-6 grid gap-4 border-t pt-6 md:grid-cols-2">
+                                {(order.customer_note ||
+                                    order.admin_note) && (
+                                    <div className="mt-6 grid gap-4 border-t border-gray-200 pt-6 dark:border-green-900 md:grid-cols-2">
                                         {order.customer_note && (
-                                            <div className="rounded-xl bg-gray-50 p-4">
-                                                <h3 className="font-semibold text-gray-900">
+                                            <div className="rounded-xl bg-gray-50 p-4 dark:bg-green-900/40">
+                                                <h3 className="font-semibold text-gray-900 dark:text-white">
                                                     Customer Note
                                                 </h3>
 
-                                                <p className="mt-2 text-sm text-gray-600">
+                                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                                                     {order.customer_note}
                                                 </p>
                                             </div>
                                         )}
 
                                         {order.admin_note && (
-                                            <div className="rounded-xl bg-gray-50 p-4">
-                                                <h3 className="font-semibold text-gray-900">
+                                            <div className="rounded-xl bg-gray-50 p-4 dark:bg-green-900/40">
+                                                <h3 className="font-semibold text-gray-900 dark:text-white">
                                                     Admin Note
                                                 </h3>
 
-                                                <p className="mt-2 text-sm text-gray-600">
+                                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                                                     {order.admin_note}
                                                 </p>
                                             </div>

@@ -91,12 +91,13 @@ export default function AddToCartButton({
 
       if (!user) {
         router.push(
-          `/auth?next=${encodeURIComponent(window.location.pathname)}`
+          `/auth?next=${encodeURIComponent(
+            window.location.pathname,
+          )}`,
         );
         return;
       }
 
-      // Find the customer's existing cart.
       let { data: cart, error: cartError } = await supabase
         .from("carts")
         .select("id")
@@ -107,7 +108,6 @@ export default function AddToCartButton({
         throw new Error(cartError.message);
       }
 
-      // Create a cart if the customer doesn't have one.
       if (!cart) {
         const { data: newCart, error: createCartError } =
           await supabase
@@ -125,7 +125,6 @@ export default function AddToCartButton({
         cart = newCart;
       }
 
-      // Check whether the product is already in the cart.
       const { data: existingItem, error: itemError } =
         await supabase
           .from("cart_items")
@@ -145,7 +144,7 @@ export default function AddToCartButton({
       if (newQuantity > stockQuantity) {
         throw new Error(
           `Only ${stockQuantity} item${stockQuantity === 1 ? "" : "s"
-          } available.`
+          } available.`,
         );
       }
 
@@ -177,7 +176,7 @@ export default function AddToCartButton({
       setMessage(
         quantity === 1
           ? "Added to cart."
-          : `${quantity} items added to cart.`
+          : `${quantity} items added to cart.`,
       );
 
       router.refresh();
@@ -187,7 +186,7 @@ export default function AddToCartButton({
       setMessage(
         error instanceof Error
           ? error.message
-          : "Unable to add this product to your cart."
+          : "Unable to add this product to your cart.",
       );
     } finally {
       setLoading(false);
@@ -196,24 +195,26 @@ export default function AddToCartButton({
 
   if (isOutOfStock) {
     return (
-      <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
-        <p className="text-sm font-bold text-red-700">
+      <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 dark:border-red-900 dark:bg-red-950/40">
+        <p className="text-sm font-bold text-red-700 dark:text-red-300">
           Out of stock
         </p>
 
-        <p className="mt-0.5 text-xs text-red-600">
+        <p className="mt-0.5 text-xs text-red-600 dark:text-red-300/80">
           This product is currently unavailable.
         </p>
       </div>
     );
-  } if (compact) {
+  }
+
+  if (compact) {
     return (
       <button
         type="button"
         onClick={addToCart}
         disabled={loading}
         aria-busy={loading}
-        className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-3 text-xs font-black text-white shadow-sm transition hover:bg-green-800 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-green-300 disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex min-h-10 w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-3 text-xs font-black text-white shadow-sm transition hover:bg-green-800 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-green-300 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-green-700 dark:hover:bg-green-600 dark:focus:ring-lime-400"
       >
         {loading ? (
           <>
@@ -234,18 +235,20 @@ export default function AddToCartButton({
     <div className="space-y-3">
       {/* Quantity selector */}
       <div>
-        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-500">
+        <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-green-200/70">
           Quantity
         </p>
 
-        <div className="inline-flex items-center overflow-hidden rounded-2xl border border-green-100 bg-green-50/60">
+        <div className="inline-flex items-center overflow-hidden rounded-2xl border border-green-100 bg-green-50/60 dark:border-green-900 dark:bg-green-950/60">
           <button
             type="button"
             onClick={() =>
-              setQuantity((current) => Math.max(1, current - 1))
+              setQuantity((current) =>
+                Math.max(1, current - 1),
+              )
             }
             disabled={quantity <= 1 || loading}
-            className="flex h-10 w-10 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-10 w-10 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30 dark:text-green-200 dark:hover:bg-green-900 dark:hover:text-lime-300"
             aria-label="Decrease quantity"
           >
             <MinusIcon />
@@ -253,7 +256,7 @@ export default function AddToCartButton({
 
           <span
             aria-live="polite"
-            className="flex h-10 min-w-11 items-center justify-center border-x border-green-100 bg-white px-3 text-sm font-black text-gray-950"
+            className="flex h-10 min-w-11 items-center justify-center border-x border-green-100 bg-white px-3 text-sm font-black text-gray-950 dark:border-green-900 dark:bg-[#102019] dark:text-white"
           >
             {quantity}
           </span>
@@ -262,11 +265,11 @@ export default function AddToCartButton({
             type="button"
             onClick={() =>
               setQuantity((current) =>
-                Math.min(stockQuantity, current + 1)
+                Math.min(stockQuantity, current + 1),
               )
             }
             disabled={quantity >= stockQuantity || loading}
-            className="flex h-10 w-10 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30"
+            className="flex h-10 w-10 items-center justify-center text-gray-600 transition hover:bg-green-100 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-30 dark:text-green-200 dark:hover:bg-green-900 dark:hover:text-lime-300"
             aria-label="Increase quantity"
           >
             <PlusIcon />
@@ -274,7 +277,7 @@ export default function AddToCartButton({
         </div>
 
         {stockQuantity <= 10 && (
-          <p className="mt-1.5 text-[11px] font-semibold text-amber-600">
+          <p className="mt-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-300">
             Only {stockQuantity} left in stock.
           </p>
         )}
@@ -286,7 +289,7 @@ export default function AddToCartButton({
         onClick={addToCart}
         disabled={loading}
         aria-busy={loading}
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-green-700 px-5 text-sm font-black text-white shadow-lg shadow-green-800/10 transition duration-300 hover:-translate-y-0.5 hover:bg-green-800 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-200 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none"
+        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-green-700 px-5 text-sm font-black text-white shadow-lg shadow-green-800/10 transition duration-300 hover:-translate-y-0.5 hover:bg-green-800 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-200 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none dark:bg-green-700 dark:hover:bg-green-600 dark:focus:ring-green-900"
       >
         {loading ? (
           <>
@@ -310,15 +313,15 @@ export default function AddToCartButton({
         <div
           role={message.includes("Added") ? "status" : "alert"}
           className={`rounded-2xl border px-4 py-3 text-sm font-medium ${message.includes("Added")
-            ? "border-green-100 bg-green-50 text-green-800"
-            : "border-red-100 bg-red-50 text-red-700"
+              ? "border-green-100 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-950/50 dark:text-green-300"
+              : "border-red-100 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
             }`}
         >
           <div className="flex items-start gap-2.5">
             <span
               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black ${message.includes("Added")
-                ? "bg-green-600 text-white"
-                : "bg-red-600 text-white"
+                  ? "bg-green-600 text-white dark:bg-green-700"
+                  : "bg-red-600 text-white dark:bg-red-700"
                 }`}
             >
               {message.includes("Added") ? "✓" : "!"}
@@ -329,7 +332,7 @@ export default function AddToCartButton({
         </div>
       )}
 
-      <p className="text-center text-[10px] leading-4 text-gray-400">
+      <p className="text-center text-[10px] leading-4 text-gray-400 dark:text-green-200/50">
         Maximum quantity is limited by available stock.
       </p>
     </div>

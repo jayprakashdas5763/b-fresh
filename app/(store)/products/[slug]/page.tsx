@@ -149,7 +149,7 @@ export default async function ProductPage({
           alt_text,
           sort_order
         )
-      `
+      `,
     )
     .eq("slug", slug)
     .eq("is_active", true)
@@ -160,7 +160,7 @@ export default async function ProductPage({
   }
 
   const images = [...(product.product_images ?? [])].sort(
-    (a, b) => a.sort_order - b.sort_order
+    (a, b) => a.sort_order - b.sort_order,
   );
 
   const isOutOfStock = product.stock_quantity <= 0;
@@ -173,7 +173,7 @@ export default async function ProductPage({
     ? Math.round(
         ((Number(product.compare_at_price) - Number(product.price)) /
           Number(product.compare_at_price)) *
-          100
+          100,
       )
     : 0;
 
@@ -185,7 +185,7 @@ export default async function ProductPage({
         rating,
         review_text,
         created_at
-      `
+      `,
     )
     .eq("product_id", product.id)
     .eq("status", "approved")
@@ -247,7 +247,7 @@ export default async function ProductPage({
   };
 
   return (
-    <main className="min-h-screen bg-[#f4faef]">
+    <main className="min-h-screen bg-[#f4faef] dark:bg-[#07140d]">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -268,7 +268,7 @@ export default async function ProductPage({
           {/* Back */}
           <Link
             href={backHref}
-            className="inline-flex items-center gap-2 rounded-full border border-green-100 bg-[#fffdf7] px-3.5 py-2 text-xs font-bold text-gray-600 shadow-sm transition hover:bg-green-50 hover:text-green-800 sm:px-4 sm:text-sm"
+            className="inline-flex items-center gap-2 rounded-full border border-green-100 bg-[#fffdf7] px-3.5 py-2 text-xs font-bold text-gray-600 shadow-sm transition hover:bg-green-50 hover:text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-gray-300 dark:hover:bg-green-900 dark:hover:text-lime-300 sm:px-4 sm:text-sm"
           >
             <ArrowBackIcon />
             {backLabel}
@@ -276,7 +276,7 @@ export default async function ProductPage({
 
           <div className="mt-5 grid gap-6 lg:mt-7 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10">
             {/* Gallery */}
-            <div className="overflow-hidden rounded-3xl border border-green-100 bg-[#fffdf7] p-2.5 shadow-sm sm:p-5">
+            <div className="overflow-hidden rounded-3xl border border-green-100 bg-[#fffdf7] p-2.5 shadow-sm dark:border-green-900 dark:bg-green-950/60 sm:p-5">
               <ProductImageGallery
                 productName={product.name}
                 images={images}
@@ -287,12 +287,12 @@ export default async function ProductPage({
             <div className="flex flex-col">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-green-800">
-                    <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
+                  <div className="inline-flex items-center gap-2 rounded-full bg-green-100 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-green-800 dark:bg-green-900 dark:text-lime-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-lime-400" />
                     B-Fresh
                   </div>
 
-                  <h1 className="mt-4 text-3xl font-black tracking-[-0.04em] text-gray-950 sm:text-5xl">
+                  <h1 className="mt-4 text-3xl font-black tracking-[-0.04em] text-gray-950 dark:text-white sm:text-5xl">
                     {product.name}
                   </h1>
                 </div>
@@ -308,14 +308,14 @@ export default async function ProductPage({
                   <div
                     className="text-sm tracking-wide text-amber-500"
                     aria-label={`${averageRating.toFixed(
-                      1
+                      1,
                     )} out of 5 stars`}
                   >
                     {"★".repeat(Math.round(averageRating))}
                     {"☆".repeat(5 - Math.round(averageRating))}
                   </div>
 
-                  <span className="text-xs font-semibold text-gray-500 sm:text-sm">
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 sm:text-sm">
                     {averageRating.toFixed(1)} · {reviews.length}{" "}
                     {reviews.length === 1 ? "review" : "reviews"}
                   </span>
@@ -324,29 +324,29 @@ export default async function ProductPage({
 
               {/* Description */}
               {product.description && (
-                <p className="mt-4 max-w-xl text-sm leading-7 text-gray-600 sm:mt-5 sm:text-base sm:leading-8">
+                <p className="mt-4 max-w-xl text-sm leading-7 text-gray-600 dark:text-gray-300 sm:mt-5 sm:text-base sm:leading-8">
                   {product.description}
                 </p>
               )}
 
               {/* Price */}
-              <div className="mt-5 rounded-3xl border border-green-100 bg-[#fffdf7] p-4 shadow-sm sm:mt-7 sm:p-5">
+              <div className="mt-5 rounded-3xl border border-green-100 bg-[#fffdf7] p-4 shadow-sm dark:border-green-900 dark:bg-green-950/70 sm:mt-7 sm:p-5">
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div>
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <span className="text-3xl font-black tracking-tight text-gray-950 sm:text-4xl">
+                      <span className="text-3xl font-black tracking-tight text-gray-950 dark:text-white sm:text-4xl">
                         ₹{Number(product.price).toFixed(2)}
                       </span>
 
                       {hasDiscount && (
-                        <span className="text-sm font-medium text-gray-400 line-through sm:text-base">
+                        <span className="text-sm font-medium text-gray-400 line-through dark:text-gray-500 sm:text-base">
                           ₹
                           {Number(product.compare_at_price).toFixed(2)}
                         </span>
                       )}
                     </div>
 
-                    <p className="mt-1 text-xs font-medium text-gray-500">
+                    <p className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">
                       Price per {product.unit}
                     </p>
                   </div>
@@ -361,21 +361,21 @@ export default async function ProductPage({
                 {/* Status chips */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {isOutOfStock ? (
-                    <span className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700">
+                    <span className="rounded-full bg-red-50 px-3 py-1.5 text-xs font-bold text-red-700 dark:bg-red-950/60 dark:text-red-300">
                       Currently unavailable
                     </span>
                   ) : (
-                    <span className="rounded-full bg-green-100 px-3 py-1.5 text-xs font-bold text-green-800">
+                    <span className="rounded-full bg-green-100 px-3 py-1.5 text-xs font-bold text-green-800 dark:bg-green-900 dark:text-lime-300">
                       ✓ In stock
                     </span>
                   )}
 
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-800">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-800 dark:bg-green-900 dark:text-lime-300">
                     <TruckIcon />
                     Local delivery
                   </span>
 
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-800">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1.5 text-xs font-bold text-green-800 dark:bg-green-900 dark:text-lime-300">
                     <ShieldIcon />
                     Secure ordering
                   </span>
@@ -383,7 +383,7 @@ export default async function ProductPage({
               </div>
 
               {!isOutOfStock && (
-                <p className="mt-3 text-xs font-semibold text-gray-500">
+                <p className="mt-3 text-xs font-semibold text-gray-500 dark:text-gray-400">
                   {product.stock_quantity} available
                 </p>
               )}
@@ -399,7 +399,7 @@ export default async function ProductPage({
               )}
 
               {product.sku && (
-                <p className="mt-4 text-[10px] font-medium text-gray-400">
+                <p className="mt-4 text-[10px] font-medium text-gray-400 dark:text-gray-500">
                   SKU: {product.sku}
                 </p>
               )}
@@ -409,51 +409,50 @@ export default async function ProductPage({
       </section>
 
       {/* Reviews */}
-      <section className="border-t border-green-100 bg-[#fffdf7] px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+      <section className="border-t border-green-100 bg-[#fffdf7] px-4 py-10 dark:border-green-900 dark:bg-[#0a1b12] sm:px-6 sm:py-14 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-green-700">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-green-700 dark:text-lime-300">
                 Customer feedback
               </p>
 
-              <h2 className="mt-1 text-2xl font-black tracking-tight text-gray-950 sm:text-3xl">
+              <h2 className="mt-1 text-2xl font-black tracking-tight text-gray-950 dark:text-white sm:text-3xl">
                 Reviews
               </h2>
             </div>
 
             {reviews && reviews.length > 0 && (
-              <div className="rounded-full bg-green-100 px-4 py-2 text-sm font-black text-green-800">
+              <div className="rounded-full bg-green-100 px-4 py-2 text-sm font-black text-green-800 dark:bg-green-900 dark:text-lime-300">
                 {averageRating.toFixed(1)} / 5
               </div>
             )}
           </div>
 
           {reviews && reviews.length > 0 ? (
-            <div className="mt-6 grid gap-4 lg:grid-cols-2 sm:mt-8 sm:gap-5">
+            <div className="mt-6 grid gap-4 sm:mt-8 sm:grid-cols-2 sm:gap-5">
               {reviews.map((review) => (
                 <article
                   key={review.id}
-                  className="rounded-3xl border border-green-100 bg-[#f8fbf5] p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg sm:p-6"
+                  className="rounded-3xl border border-green-100 bg-[#f8fbf5] p-5 transition duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-green-900 dark:bg-green-950/60 dark:hover:shadow-black/30 sm:p-6"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-black text-gray-950">
+                      <p className="font-black text-gray-950 dark:text-white">
                         B-Fresh Customer
                       </p>
 
-                      <p className="mt-1 text-xs font-medium text-gray-400">
-                        {new Date(review.created_at).toLocaleDateString(
-                          "en-IN",
-                          {
-                            dateStyle: "medium",
-                          }
-                        )}
+                      <p className="mt-1 text-xs font-medium text-gray-400 dark:text-gray-500">
+                        {new Date(
+                          review.created_at,
+                        ).toLocaleDateString("en-IN", {
+                          dateStyle: "medium",
+                        })}
                       </p>
                     </div>
 
                     <div
-                      className="rounded-full bg-white px-3 py-1 text-sm tracking-wide text-amber-500 shadow-sm"
+                      className="rounded-full bg-white px-3 py-1 text-sm tracking-wide text-amber-500 shadow-sm dark:bg-green-900"
                       aria-label={`${review.rating} out of 5 stars`}
                     >
                       {"★".repeat(review.rating)}
@@ -462,7 +461,7 @@ export default async function ProductPage({
                   </div>
 
                   {review.review_text && (
-                    <p className="mt-4 text-sm leading-7 text-gray-600">
+                    <p className="mt-4 text-sm leading-7 text-gray-600 dark:text-gray-300">
                       “{review.review_text}”
                     </p>
                   )}
@@ -470,14 +469,14 @@ export default async function ProductPage({
               ))}
             </div>
           ) : (
-            <div className="mt-6 rounded-3xl border border-dashed border-green-200 bg-green-50/60 px-6 py-12 text-center sm:mt-8 sm:py-14">
+            <div className="mt-6 rounded-3xl border border-dashed border-green-200 bg-green-50/60 px-6 py-12 text-center dark:border-green-900 dark:bg-green-950/50 sm:mt-8 sm:py-14">
               <div className="text-4xl">💚</div>
 
-              <p className="mt-4 text-lg font-black text-gray-950">
+              <p className="mt-4 text-lg font-black text-gray-950 dark:text-white">
                 No reviews yet
               </p>
 
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Be the first customer to share your experience.
               </p>
             </div>

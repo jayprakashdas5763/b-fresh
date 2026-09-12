@@ -119,10 +119,10 @@ export default async function AccountPage() {
     "B-Fresh Customer";
 
   return (
-    <main className="min-h-screen bg-[#f5faef] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <main className="min-h-screen bg-[#f5faef] px-4 py-8 transition-colors dark:bg-[#07140d] sm:px-6 sm:py-10 lg:px-8">
       <div className="mx-auto max-w-7xl">
         {/* Hero */}
-        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-green-800 via-green-700 to-green-600 px-6 py-8 shadow-xl shadow-green-900/10 sm:px-8 sm:py-10">
+        <section className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-green-800 via-green-700 to-green-600 px-6 py-8 shadow-xl shadow-green-900/10 dark:from-green-950 dark:via-green-900 dark:to-green-800 sm:px-8 sm:py-10">
           <div
             className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-lime-300/15 blur-3xl"
             aria-hidden="true"
@@ -151,7 +151,7 @@ export default async function AccountPage() {
 
             <Link
               href="/products"
-              className="inline-flex min-h-11 w-fit items-center rounded-full bg-white px-5 text-sm font-bold text-green-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-green-50"
+              className="inline-flex min-h-11 w-fit items-center rounded-full bg-white px-5 text-sm font-bold text-green-800 shadow-lg transition hover:-translate-y-0.5 hover:bg-green-50 dark:hover:bg-green-100"
             >
               Start shopping →
             </Link>
@@ -162,63 +162,63 @@ export default async function AccountPage() {
         <section className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/orders"
-            className="group rounded-3xl border border-green-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-xl hover:shadow-green-900/5"
+            className="group rounded-3xl border border-green-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-green-200 hover:shadow-xl hover:shadow-green-900/5 dark:border-green-900/70 dark:bg-green-950/70 dark:hover:border-green-700 dark:hover:bg-green-950"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700 transition group-hover:bg-green-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-50 text-green-700 transition group-hover:bg-green-100 dark:bg-green-900 dark:text-lime-300 dark:group-hover:bg-green-800">
               <OrdersIcon />
             </div>
 
-            <h2 className="mt-5 font-black text-gray-950">
+            <h2 className="mt-5 font-black text-gray-950 dark:text-white">
               My Orders
             </h2>
 
-            <p className="mt-1.5 text-sm leading-6 text-gray-500">
+            <p className="mt-1.5 text-sm leading-6 text-gray-500 dark:text-green-200/70">
               Track orders and view your purchase history.
             </p>
 
-            <span className="mt-4 block text-sm font-bold text-green-700">
+            <span className="mt-4 block text-sm font-bold text-green-700 dark:text-lime-300">
               View orders →
             </span>
           </Link>
 
           <Link
             href="/wishlist"
-            className="group rounded-3xl border border-lime-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-lime-200 hover:shadow-xl hover:shadow-lime-900/5"
+            className="group rounded-3xl border border-lime-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-lime-200 hover:shadow-xl hover:shadow-lime-900/5 dark:border-lime-900/60 dark:bg-green-950/70 dark:hover:border-lime-800 dark:hover:bg-green-950"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-50 text-green-700 transition group-hover:bg-lime-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime-50 text-green-700 transition group-hover:bg-lime-100 dark:bg-lime-950 dark:text-lime-300 dark:group-hover:bg-lime-900">
               <HeartIcon />
             </div>
 
-            <h2 className="mt-5 font-black text-gray-950">
+            <h2 className="mt-5 font-black text-gray-950 dark:text-white">
               Wishlist
             </h2>
 
-            <p className="mt-1.5 text-sm leading-6 text-gray-500">
+            <p className="mt-1.5 text-sm leading-6 text-gray-500 dark:text-green-200/70">
               Keep your favourite products close.
             </p>
 
-            <span className="mt-4 block text-sm font-bold text-green-700">
+            <span className="mt-4 block text-sm font-bold text-green-700 dark:text-lime-300">
               View wishlist →
             </span>
           </Link>
 
           <Link
             href="#addresses"
-            className="group rounded-3xl border border-amber-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5"
+            className="group rounded-3xl border border-amber-100 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-200 hover:shadow-xl hover:shadow-amber-900/5 dark:border-amber-900/60 dark:bg-green-950/70 dark:hover:border-amber-800 dark:hover:bg-green-950"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 transition group-hover:bg-amber-100">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 transition group-hover:bg-amber-100 dark:bg-amber-950 dark:text-amber-300 dark:group-hover:bg-amber-900">
               <LocationIcon />
             </div>
 
-            <h2 className="mt-5 font-black text-gray-950">
+            <h2 className="mt-5 font-black text-gray-950 dark:text-white">
               Addresses
             </h2>
 
-            <p className="mt-1.5 text-sm leading-6 text-gray-500">
+            <p className="mt-1.5 text-sm leading-6 text-gray-500 dark:text-green-200/70">
               Manage your saved delivery addresses.
             </p>
 
-            <span className="mt-4 block text-sm font-bold text-green-700">
+            <span className="mt-4 block text-sm font-bold text-green-700 dark:text-lime-300">
               Manage addresses →
             </span>
           </Link>
@@ -226,21 +226,21 @@ export default async function AccountPage() {
           {isAdmin && (
             <Link
               href="/admin"
-              className="group rounded-3xl border border-green-200 bg-green-50 p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:bg-green-100 hover:shadow-xl hover:shadow-green-900/5"
+              className="group rounded-3xl border border-green-200 bg-green-50 p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:bg-green-100 hover:shadow-xl hover:shadow-green-900/5 dark:border-green-800 dark:bg-green-950/80 dark:hover:border-green-700 dark:hover:bg-green-900/80"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-800 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-green-800 shadow-sm dark:bg-green-900 dark:text-lime-300">
                 <ShieldIcon />
               </div>
 
-              <h2 className="mt-5 font-black text-green-950">
+              <h2 className="mt-5 font-black text-green-950 dark:text-white">
                 Admin Panel
               </h2>
 
-              <p className="mt-1.5 text-sm leading-6 text-green-900/70">
+              <p className="mt-1.5 text-sm leading-6 text-green-900/70 dark:text-green-100/70">
                 Manage the B-Fresh store and operations.
               </p>
 
-              <span className="mt-4 block text-sm font-bold text-green-800">
+              <span className="mt-4 block text-sm font-bold text-green-800 dark:text-lime-300">
                 Open admin →
               </span>
             </Link>
@@ -248,33 +248,35 @@ export default async function AccountPage() {
         </section>
 
         {/* Profile */}
-        <section className="mt-7 overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-sm">
-          <div className="border-b border-gray-100 bg-gradient-to-r from-green-50 to-lime-50 px-5 py-5 sm:px-7">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
+        <section className="mt-7 overflow-hidden rounded-[2rem] border border-green-100 bg-white shadow-sm dark:border-green-900/70 dark:bg-green-950/70">
+          <div className="border-b border-gray-100 bg-gradient-to-r from-green-50 to-lime-50 px-5 py-5 dark:border-green-900 dark:from-green-950 dark:to-[#102019] sm:px-7">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700 dark:text-lime-300">
               Account details
             </p>
 
-            <h2 className="mt-1 text-2xl font-black text-gray-950">
+            <h2 className="mt-1 text-2xl font-black text-gray-950 dark:text-white">
               Profile information
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Keep your contact details up to date for smooth delivery.
+            <p className="mt-1 text-sm text-gray-500 dark:text-green-200/70">
+              Keep your contact details up to date for smooth
+              delivery.
             </p>
           </div>
 
           <div className="p-5 sm:p-7">
-            <div className="rounded-2xl bg-gray-50 p-4 ring-1 ring-gray-100">
-              <p className="text-[10px] font-black uppercase tracking-wider text-gray-400">
+            <div className="rounded-2xl bg-gray-50 p-4 ring-1 ring-gray-100 dark:bg-[#102019] dark:ring-green-900">
+              <p className="text-[10px] font-black uppercase tracking-wider text-gray-400 dark:text-green-300/60">
                 Email address
               </p>
 
-              <p className="mt-1 break-all text-sm font-bold text-gray-950">
+              <p className="mt-1 break-all text-sm font-bold text-gray-950 dark:text-white">
                 {user.email}
               </p>
 
-              <p className="mt-1 text-xs leading-5 text-gray-500">
-                Your email is managed by your B-Fresh login account.
+              <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-green-200/60">
+                Your email is managed by your B-Fresh login
+                account.
               </p>
             </div>
 
@@ -289,18 +291,22 @@ export default async function AccountPage() {
         </section>
 
         {/* Addresses */}
-        <section id="addresses" className="mt-7 scroll-mt-24">
+        <section
+          id="addresses"
+          className="mt-7 scroll-mt-24"
+        >
           <div className="mb-4">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-green-700 dark:text-lime-300">
               Delivery
             </p>
 
-            <h2 className="mt-1 text-2xl font-black text-gray-950 sm:text-3xl">
+            <h2 className="mt-1 text-2xl font-black text-gray-950 dark:text-white sm:text-3xl">
               Your addresses
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Choose and manage where your B-Fresh orders should go.
+            <p className="mt-1 text-sm text-gray-500 dark:text-green-200/70">
+              Choose and manage where your B-Fresh orders should
+              go.
             </p>
           </div>
 

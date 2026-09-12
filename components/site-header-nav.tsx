@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import ThemeToggle from "@/components/theme-toggle";
 
 type SiteHeaderNavProps = {
   isLoggedIn: boolean;
@@ -183,7 +184,7 @@ export default function SiteHeaderNav({
 }: SiteHeaderNavProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const [navigationLoading, setNavigationLoading] = useState(false);
   const isActive = (href: string) => {
     if (href === "/") {
       return pathname === "/";
@@ -197,19 +198,82 @@ export default function SiteHeaderNav({
   };
 
   const closeMenu = () => setMenuOpen(false);
+  useEffect(() => {
+    function handleNavigationClick(event: MouseEvent) {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const target = event.target as HTMLElement | null;
+      const link = target?.closest("a");
+
+      if (!link) {
+        return;
+      }
+
+      const href = link.getAttribute("href");
+
+      if (
+        !href ||
+        href.startsWith("#") ||
+        href.startsWith("mailto:") ||
+        href.startsWith("tel:") ||
+        link.target === "_blank"
+      ) {
+        return;
+      }
+
+      try {
+        const url = new URL(href, window.location.href);
+
+        if (url.origin !== window.location.origin) {
+          return;
+        }
+
+        const currentUrl = new URL(window.location.href);
+
+        if (
+          url.pathname === currentUrl.pathname &&
+          url.search === currentUrl.search &&
+          url.hash === currentUrl.hash
+        ) {
+          return;
+        }
+
+        setNavigationLoading(true);
+      } catch {
+        // Ignore malformed URLs.
+      }
+    }
+
+    document.addEventListener("click", handleNavigationClick);
+
+    return () => {
+      document.removeEventListener("click", handleNavigationClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    setNavigationLoading(false);
+  }, [pathname]);
 
   const desktopLinkClass = (href: string) =>
-    `group inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold transition ${
-      isActive(href)
-        ? "bg-green-100 text-green-800"
-        : "text-gray-600 hover:bg-green-50 hover:text-gray-950"
+    `group inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold transition ${isActive(href)
+      ? "bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-lime-300"
+      : "text-gray-600 hover:bg-green-50 hover:text-gray-950 dark:text-gray-300 dark:hover:bg-green-950 dark:hover:text-white"
     }`;
 
   const mobileLinkClass = (href: string) =>
-    `flex min-h-12 items-center justify-between rounded-2xl border px-4 text-sm font-bold transition ${
-      isActive(href)
-        ? "border-green-200 bg-green-100 text-green-800"
-        : "border-transparent text-gray-700 hover:border-green-100 hover:bg-green-50"
+    `flex min-h-12 items-center justify-between rounded-2xl border px-4 text-sm font-bold transition ${isActive(href)
+      ? "border-green-200 bg-green-100 text-green-800 dark:border-green-700 dark:bg-green-900/60 dark:text-lime-300"
+      : "border-transparent text-gray-700 hover:border-green-100 hover:bg-green-50 dark:text-gray-200 dark:hover:border-green-800 dark:hover:bg-green-950"
     }`;
 
   const navItems = [
@@ -227,6 +291,15 @@ export default function SiteHeaderNav({
 
   return (
     <>
+      {navigationLoading && (
+        <div
+          className="fixed left-0 right-0 top-0 z-[9999] h-1 overflow-hidden bg-green-100 dark:bg-green-950"
+          aria-live="polite"
+          aria-label="Loading page"
+        >
+          <div className="h-full w-1/3 animate-[navigation-progress_1s_ease-in-out_infinite] rounded-r-full bg-green-600 dark:bg-lime-400" />
+        </div>
+      )}
       {/* Desktop */}
       <nav
         aria-label="Main navigation"
@@ -293,11 +366,10 @@ export default function SiteHeaderNav({
         {isAdmin && (
           <Link
             href="/admin"
-            className={`ml-1 inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-bold transition ${
-              pathname === "/admin" || pathname.startsWith("/admin/")
-                ? "bg-green-800 text-white shadow-md"
-                : "bg-green-700 text-white shadow-md hover:-translate-y-0.5 hover:bg-green-800"
-            }`}
+            className={`ml-1 inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-bold transition ${pathname === "/admin" || pathname.startsWith("/admin/")
+              ? "bg-green-800 text-white shadow-md"
+              : "bg-green-600 dark:bg-lime-400 text-white shadow-md hover:-translate-y-0.5 hover:bg-green-800"
+              }`}
           >
             <ShieldIcon />
             <span>Admin</span>
@@ -323,18 +395,18 @@ export default function SiteHeaderNav({
             Sign in
           </Link>
         )}
+        <ThemeToggle />
+
 
         {/* Desktop cart */}
         <Link
           href="/cart"
-          aria-label={`Shopping cart${
-            cartItemCount > 0 ? `, ${cartItemCount} items` : ""
-          }`}
-          className={`group relative ml-1 inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3.5 text-sm font-bold transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${
-            isActive("/cart")
-              ? "bg-green-800 text-white shadow-lg"
-              : "bg-gray-950 text-white shadow-lg hover:-translate-y-0.5 hover:bg-gray-800"
-          }`}
+          aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""
+            }`}
+          className={`group relative ml-1 inline-flex h-11 min-w-11 items-center justify-center gap-2 rounded-full px-3.5 text-sm font-bold transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${isActive("/cart")
+            ? "bg-green-800 text-white shadow-lg"
+            : "bg-gray-950 text-white shadow-lg hover:-translate-y-0.5 hover:bg-gray-800"
+            }`}
         >
           <CartIcon />
 
@@ -342,11 +414,10 @@ export default function SiteHeaderNav({
 
           {cartItemCount > 0 && (
             <span
-              className={`flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${
-                isActive("/cart")
-                  ? "bg-white text-green-800"
-                  : "bg-lime-300 text-green-950"
-              }`}
+              className={`flex min-w-[20px] items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${isActive("/cart")
+                ? "bg-white text-green-800"
+                : "bg-lime-300 text-green-950"
+                }`}
             >
               {cartItemCount > 99 ? "99+" : cartItemCount}
             </span>
@@ -356,16 +427,15 @@ export default function SiteHeaderNav({
 
       {/* Tablet / Mobile */}
       <div className="flex items-center gap-2 lg:hidden">
+        <ThemeToggle />
         <Link
           href="/cart"
-          aria-label={`Shopping cart${
-            cartItemCount > 0 ? `, ${cartItemCount} items` : ""
-          }`}
-          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${
-            isActive("/cart")
-              ? "bg-green-800 text-white"
-              : "bg-gray-950 text-white"
-          }`}
+          aria-label={`Shopping cart${cartItemCount > 0 ? `, ${cartItemCount} items` : ""
+            }`}
+          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${isActive("/cart")
+            ? "bg-green-800 text-white"
+            : "bg-gray-950 text-white"
+            }`}
         >
           <CartIcon />
 
@@ -383,11 +453,10 @@ export default function SiteHeaderNav({
           }
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((current) => !current)}
-          className={`flex h-10 w-10 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${
-            menuOpen
-              ? "border-green-200 bg-green-100 text-green-800"
-              : "border-green-100 bg-[#fffdf7] text-gray-800 shadow-sm"
-          }`}
+          className={`flex h-10 w-10 items-center justify-center rounded-full border transition focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 ${menuOpen
+            ? "border-green-200 bg-green-100 text-green-800"
+            : "border-green-100 bg-[#fffdf7] text-gray-800 shadow-sm"
+            }`}
         >
           <MenuIcon open={menuOpen} />
         </button>
@@ -395,21 +464,21 @@ export default function SiteHeaderNav({
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 border-t border-green-100 bg-[#f7fbf2] shadow-2xl shadow-green-900/10 lg:hidden">
+        <div className="absolute left-0 right-0 top-full z-50 border-t border-green-100 bg-[#f7fbf2] shadow-2xl shadow-green-900/10 dark:border-green-900 dark:bg-[#07140d] dark:shadow-black/40 lg:hidden">
           <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
             <div className="mb-4 flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-green-700 dark:text-lime-300">
                   B-Fresh
                 </p>
 
-                <p className="mt-0.5 text-sm font-bold text-gray-900">
+                <p className="mt-0.5 text-sm font-bold text-gray-900 dark:text-white">
                   Fresh • Local • Simple
                 </p>
               </div>
 
               {isLoggedIn && unreadNotificationCount > 0 && (
-                <span className="rounded-full bg-red-50 px-2.5 py-1.5 text-[10px] font-black text-red-600">
+                <span className="rounded-full bg-red-50 dark:bg-red-950/60 px-2.5 py-1.5 text-[10px] font-black text-red-600 dark:text-red-300">
                   {unreadNotificationCount > 99
                     ? "99+"
                     : unreadNotificationCount}{" "}
@@ -505,7 +574,7 @@ export default function SiteHeaderNav({
                     </span>
 
                     {unreadNotificationCount > 0 && (
-                      <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600">
+                      <span className="rounded-full bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 dark:bg-red-950/60 dark:text-red-300">
                         {unreadNotificationCount > 99
                           ? "99+"
                           : unreadNotificationCount}
@@ -526,7 +595,7 @@ export default function SiteHeaderNav({
                 </span>
 
                 {cartItemCount > 0 && (
-                  <span className="rounded-full bg-gray-950 px-2.5 py-1 text-[10px] font-black text-white">
+                  <span className="rounded-full bg-gray-950 px-2.5 py-1 text-[10px] font-black text-white dark:bg-lime-300 dark:text-green-950">
                     {cartItemCount > 99 ? "99+" : cartItemCount} items
                   </span>
                 )}
@@ -536,11 +605,10 @@ export default function SiteHeaderNav({
                 <Link
                   href="/admin"
                   onClick={closeMenu}
-                  className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-bold text-white transition ${
-                    pathname === "/admin" || pathname.startsWith("/admin/")
-                      ? "bg-green-800"
-                      : "bg-green-700 hover:bg-green-800"
-                  }`}
+                  className={`flex min-h-12 items-center gap-3 rounded-2xl px-4 text-sm font-bold text-white transition ${pathname === "/admin" || pathname.startsWith("/admin/")
+                    ? "bg-green-800"
+                    : "bg-green-600 dark:bg-lime-400 hover:bg-green-800"
+                    }`}
                 >
                   <ShieldIcon />
                   Admin Panel
@@ -553,7 +621,7 @@ export default function SiteHeaderNav({
                 <form action={signOut}>
                   <button
                     type="submit"
-                    className="flex min-h-12 w-full items-center rounded-2xl border border-red-100 bg-white px-4 text-left text-sm font-bold text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="flex min-h-12 w-full items-center rounded-2xl border border-red-100 bg-white dark:border-red-900/70 dark:bg-red-950/30 px-4 text-left text-sm font-bold text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 "
                   >
                     Logout
                   </button>
@@ -562,15 +630,15 @@ export default function SiteHeaderNav({
                 <Link
                   href="/auth"
                   onClick={closeMenu}
-                  className="flex min-h-12 items-center justify-center rounded-2xl bg-green-700 px-4 text-sm font-bold text-white shadow-lg shadow-green-800/10 transition hover:bg-green-800"
+                  className="flex min-h-12 items-center justify-center rounded-2xl bg-green-600 dark:bg-lime-400 px-4 text-sm font-bold text-white shadow-lg shadow-green-800/10 transition hover:bg-green-800"
                 >
                   Sign in / Create account
                 </Link>
               )}
             </nav>
 
-            <div className="mt-4 rounded-2xl border border-green-100 bg-[#fffdf7] px-4 py-3">
-              <p className="text-xs font-semibold leading-5 text-green-900">
+            <div className="mt-4 rounded-2xl border border-green-100 bg-[#fffdf7] px-4 py-3 dark:border-green-900 dark:bg-green-950">
+              <p className="text-xs font-semibold leading-5 text-green-900 dark:text-green-100">
                 Fresh food. Everyday essentials. Delivered locally.
               </p>
             </div>

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import ThemeProvider from "@/components/theme-provider";
 
 export const metadata: Metadata = {
     metadataBase: new URL(
         process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
     ),
+
     title: {
         default: "B-Fresh | Fresh Food & Dairy Delivered",
         template: "%s | B-Fresh",
@@ -54,14 +56,49 @@ export const metadata: Metadata = {
     },
 };
 
+const themeScript = `
+(function () {
+    try {
+        var stored = localStorage.getItem("b-fresh-theme");
+
+        var theme =
+            stored === "light" || stored === "dark"
+                ? stored
+                : window.matchMedia("(prefers-color-scheme: dark)").matches
+                    ? "dark"
+                    : "light";
+
+        document.documentElement.classList.toggle(
+            "dark",
+            theme === "dark"
+        );
+
+        document.documentElement.style.colorScheme = theme;
+    } catch (error) {
+        document.documentElement.classList.remove("dark");
+        document.documentElement.style.colorScheme = "light";
+    }
+})();
+`;
+
 export default function RootLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
-            <body>{children}</body>
+        <html lang="en" suppressHydrationWarning>
+            <head>
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html: themeScript,
+                    }}
+                />
+            </head>
+
+            <body>
+                <ThemeProvider>{children}</ThemeProvider>
+            </body>
         </html>
     );
 }

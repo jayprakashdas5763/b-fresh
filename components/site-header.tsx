@@ -73,14 +73,13 @@ export default async function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-green-100 bg-[#f7fbf2]/95 shadow-sm backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-green-100 bg-[#f7fbf2]/95 shadow-sm backdrop-blur-md dark:border-green-900/70 dark:bg-[#07140d]/95">
       <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:min-h-[4.25rem] sm:gap-4 sm:px-6 lg:px-8">
         {/* Brand */}
         <Link
           href="/"
           aria-label="B-Fresh home"
-          className="-ml-1 flex shrink-0 items-center rounded-2xl p-1 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:ml-0 sm:p-1.5"
-        >
+          className="-ml-1 flex shrink-0 items-center rounded-2xl p-1 transition hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 dark:hover:bg-green-950 dark:focus:ring-lime-400 dark:focus:ring-offset-green-950 sm:ml-0 sm:p-1.5"        >
           <Image
             src="/icon-192.png"
             alt="B-Fresh"
@@ -91,11 +90,11 @@ export default async function SiteHeader() {
           />
 
           <div className="ml-2 sm:ml-2.5">
-            <span className="block text-[1.15rem] font-black tracking-[-0.03em] text-gray-950 sm:text-[1.25rem]">
+            <span className="block text-[1.15rem] font-black tracking-[-0.03em] text-gray-950 dark:text-white sm:text-[1.25rem]">
               B-Fresh
             </span>
 
-            <span className="hidden text-[9px] font-bold uppercase tracking-[0.15em] text-green-700 sm:block">
+            <span className="hidden text-[9px] font-bold uppercase tracking-[0.15em] text-green-700 dark:text-lime-300 sm:block">
               Fresh • Local • Simple
             </span>
           </div>

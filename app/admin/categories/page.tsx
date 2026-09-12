@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 type Category = {
@@ -36,6 +37,7 @@ export default function CategoriesPage() {
 
   async function loadCategories() {
     setLoading(true);
+    setMessage("");
 
     const { data, error } = await supabase
       .from("categories")
@@ -116,7 +118,8 @@ export default function CategoriesPage() {
   function getStoragePathFromUrl(url: string | null) {
     if (!url) return null;
 
-    const marker = "/storage/v1/object/public/product-images/";
+    const marker =
+      "/storage/v1/object/public/product-images/";
 
     const index = url.indexOf(marker);
 
@@ -125,7 +128,10 @@ export default function CategoriesPage() {
     return decodeURIComponent(url.substring(index + marker.length));
   }
 
-  async function uploadCategoryImage(file: File, categoryId: string) {
+  async function uploadCategoryImage(
+    file: File,
+    categoryId: string
+  ) {
     const extension =
       file.name.split(".").pop()?.toLowerCase() || "jpg";
 
@@ -164,11 +170,16 @@ export default function CategoriesPage() {
       .remove([storagePath]);
 
     if (error) {
-      console.error("Could not delete old category image:", error);
+      console.error(
+        "Could not delete old category image:",
+        error
+      );
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     if (!name.trim()) {
@@ -211,20 +222,25 @@ export default function CategoriesPage() {
         if (error) {
           // If database update fails after uploading,
           // remove the newly uploaded image.
-          if (imageFile && imageUrl !== editingCategory.image_url) {
+          if (
+            imageFile &&
+            imageUrl !== editingCategory.image_url
+          ) {
             await deleteStorageImage(imageUrl);
           }
 
           throw new Error(error.message);
         }
 
-        // Delete old image only after database update succeeds
+        // Delete old image only after database update succeeds.
         if (
           imageFile &&
           editingCategory.image_url &&
           imageUrl !== editingCategory.image_url
         ) {
-          await deleteStorageImage(editingCategory.image_url);
+          await deleteStorageImage(
+            editingCategory.image_url
+          );
         }
 
         setMessage("Category updated successfully.");
@@ -250,15 +266,18 @@ export default function CategoriesPage() {
 
         const categoryId = data.id;
 
-        // Upload image after category has been created
+        // Upload image after category has been created.
         if (imageFile) {
           try {
-            const uploaded = await uploadCategoryImage(
-              imageFile,
-              categoryId
-            );
+            const uploaded =
+              await uploadCategoryImage(
+                imageFile,
+                categoryId
+              );
 
-            const { error: imageUpdateError } = await supabase
+            const {
+              error: imageUpdateError,
+            } = await supabase
               .from("categories")
               .update({
                 image_url: uploaded.publicUrl,
@@ -266,15 +285,19 @@ export default function CategoriesPage() {
               .eq("id", categoryId);
 
             if (imageUpdateError) {
-              await deleteStorageImage(uploaded.publicUrl);
+              await deleteStorageImage(
+                uploaded.publicUrl
+              );
 
-              // Remove category if image update failed
+              // Remove category if image update failed.
               await supabase
                 .from("categories")
                 .delete()
                 .eq("id", categoryId);
 
-              throw new Error(imageUpdateError.message);
+              throw new Error(
+                imageUpdateError.message
+              );
             }
           } catch (error) {
             throw error;
@@ -334,7 +357,7 @@ export default function CategoriesPage() {
       return;
     }
 
-    // Delete category image after successful database deletion
+    // Delete category image after successful database deletion.
     if (category.image_url) {
       await deleteStorageImage(category.image_url);
     }
@@ -344,55 +367,67 @@ export default function CategoriesPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 p-6 md:p-8">
+    <main className="min-h-screen bg-gray-50 p-6 transition-colors dark:bg-[#07140d] md:p-8">
       <div className="mx-auto max-w-5xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Categories</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Categories
+          </h1>
+
+          <p className="mt-2 text-gray-600 dark:text-gray-300">
             Manage the product categories for B-Fresh.
           </p>
         </div>
 
         {/* Add / Edit Category */}
-        <section className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold">
-              {editingCategory ? "Edit Category" : "Add Category"}
+        <section className="mb-8 rounded-2xl border border-transparent bg-white p-6 shadow-sm dark:border-green-900/70 dark:bg-green-950/70 dark:shadow-black/10">
+          <div className="mb-4 flex items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              {editingCategory
+                ? "Edit Category"
+                : "Add Category"}
             </h2>
 
             {editingCategory && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:bg-green-900"
               >
                 Cancel
               </button>
             )}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
             <input
               type="text"
               value={name}
-              onChange={(event) => setName(event.target.value)}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
               placeholder="Category name"
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:opacity-60 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
               disabled={saving}
             />
 
             <textarea
               value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) =>
+                setDescription(event.target.value)
+              }
               placeholder="Description (optional)"
               rows={3}
-              className="w-full rounded-lg border p-3"
+              className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 disabled:opacity-60 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
               disabled={saving}
             />
 
             {/* Image upload */}
             <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-green-100">
                 Category Image
               </label>
 
@@ -401,19 +436,23 @@ export default function CategoriesPage() {
                 accept="image/*"
                 disabled={saving}
                 onChange={(event) =>
-                  handleImageChange(event.target.files?.[0] ?? null)
+                  handleImageChange(
+                    event.target.files?.[0] ??
+                    null
+                  )
                 }
-                className="block w-full rounded-lg border bg-white p-2 text-sm"
+                className="block w-full rounded-lg border border-gray-300 bg-white p-2 text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-green-700 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-green-800 dark:border-green-800 dark:bg-[#102019] dark:text-green-100 dark:file:bg-green-700 dark:hover:file:bg-green-600"
               />
 
-              <p className="mt-1 text-xs text-gray-500">
-                JPG, PNG, WebP or other image formats. Maximum 5 MB.
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                JPG, PNG, WebP or other image formats.
+                Maximum 5 MB.
               </p>
             </div>
 
             {/* Image preview */}
             {imagePreview && (
-              <div className="relative h-48 w-full overflow-hidden rounded-xl border bg-gray-50 sm:w-72">
+              <div className="relative h-48 w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-50 dark:border-green-900 dark:bg-green-900/40 sm:w-72">
                 <Image
                   src={imagePreview}
                   alt="Category preview"
@@ -424,11 +463,11 @@ export default function CategoriesPage() {
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
+                className="rounded-lg bg-green-700 px-5 py-3 font-medium text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
               >
                 {saving
                   ? "Saving..."
@@ -442,7 +481,7 @@ export default function CategoriesPage() {
                   type="button"
                   onClick={resetForm}
                   disabled={saving}
-                  className="rounded-lg border px-5 py-3"
+                  className="rounded-lg border border-gray-300 bg-white px-5 py-3 text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:bg-green-900"
                 >
                   Cancel
                 </button>
@@ -451,24 +490,24 @@ export default function CategoriesPage() {
           </form>
 
           {message && (
-            <p className="mt-4 rounded-lg bg-gray-100 p-3 text-sm">
+            <p className="mt-4 rounded-lg border border-gray-200 bg-gray-100 p-3 text-sm text-gray-700 dark:border-green-900 dark:bg-green-900/40 dark:text-green-100">
               {message}
             </p>
           )}
         </section>
 
         {/* Existing Categories */}
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-semibold">
+        <section className="rounded-2xl border border-transparent bg-white p-6 shadow-sm dark:border-green-900/70 dark:bg-green-950/70 dark:shadow-black/10">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
             Existing Categories
           </h2>
 
           {loading ? (
-            <p className="text-gray-500">
+            <p className="text-gray-500 dark:text-gray-400">
               Loading categories...
             </p>
           ) : categories.length === 0 ? (
-            <p className="text-gray-500">
+            <p className="text-gray-500 dark:text-gray-400">
               No categories yet.
             </p>
           ) : (
@@ -476,15 +515,22 @@ export default function CategoriesPage() {
               {categories.map((category) => (
                 <div
                   key={category.id}
-                  className="flex flex-col gap-4 rounded-xl border p-4 md:flex-row md:items-center md:justify-between"
+                  className="flex flex-col gap-4 rounded-xl border border-gray-200 p-4 transition-colors dark:border-green-900 dark:hover:bg-green-900/20 md:flex-row md:items-center md:justify-between"
                 >
-                  <div className="flex min-w-0 items-center gap-4">
+                  <Link
+                    href={`/products?category_id=${encodeURIComponent(category.id)}`}
+                    className="group flex min-w-0 items-center gap-4 rounded-xl p-1 transition hover:bg-green-50 dark:hover:bg-green-900/20"
+                  >
                     {/* Category thumbnail */}
-                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-green-900/60">
                       {category.image_url ? (
                         <Image
-                          src={category.image_url}
-                          alt={category.name}
+                          src={
+                            category.image_url
+                          }
+                          alt={
+                            category.name
+                          }
                           fill
                           className="object-cover"
                           sizes="80px"
@@ -497,39 +543,40 @@ export default function CategoriesPage() {
                     </div>
 
                     <div className="min-w-0">
-                      <h3 className="font-semibold">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
                         {category.name}
                       </h3>
 
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 dark:text-green-200/70">
                         {category.slug}
                       </p>
 
                       {category.description && (
-                        <p className="mt-1 text-sm text-gray-600">
+                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                           {category.description}
                         </p>
                       )}
 
                       <span
-                        className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${
-                          category.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
+                        className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${category.is_active
+                          ? "bg-green-100 text-green-700 dark:bg-green-950/70 dark:text-green-300"
+                          : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                          }`}
                       >
                         {category.is_active
                           ? "Active"
                           : "Inactive"}
                       </span>
                     </div>
-                  </div>
+                  </Link>
 
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={() => startEdit(category)}
-                      className="rounded-lg border border-blue-300 px-3 py-2 text-sm text-blue-700 hover:bg-blue-50"
+                      onClick={() =>
+                        startEdit(category)
+                      }
+                      className="rounded-lg border border-blue-300 bg-white px-3 py-2 text-sm text-blue-700 transition hover:bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-950/60"
                     >
                       Edit
                     </button>
@@ -537,9 +584,11 @@ export default function CategoriesPage() {
                     <button
                       type="button"
                       onClick={() =>
-                        toggleCategory(category)
+                        toggleCategory(
+                          category
+                        )
                       }
-                      className="rounded-lg border px-3 py-2 text-sm"
+                      className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:bg-green-900"
                     >
                       {category.is_active
                         ? "Deactivate"
@@ -549,9 +598,11 @@ export default function CategoriesPage() {
                     <button
                       type="button"
                       onClick={() =>
-                        deleteCategory(category)
+                        deleteCategory(
+                          category
+                        )
                       }
-                      className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                      className="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/60"
                     >
                       Delete
                     </button>

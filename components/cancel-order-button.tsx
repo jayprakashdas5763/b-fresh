@@ -17,7 +17,7 @@ export default function CancelOrderButton({ orderId }: Props) {
 
   async function handleCancel() {
     const confirmed = window.confirm(
-      "Are you sure you want to cancel this order?"
+      "Are you sure you want to cancel this order?",
     );
 
     if (!confirmed) {
@@ -41,7 +41,7 @@ export default function CancelOrderButton({ orderId }: Props) {
         "cancel_my_order",
         {
           p_order_id: orderId,
-        }
+        },
       );
 
       if (cancelError) {
@@ -57,7 +57,7 @@ export default function CancelOrderButton({ orderId }: Props) {
       setError(
         err instanceof Error
           ? err.message
-          : "Unable to cancel the order."
+          : "Unable to cancel the order.",
       );
     } finally {
       setCancelling(false);
@@ -70,13 +70,13 @@ export default function CancelOrderButton({ orderId }: Props) {
         type="button"
         onClick={handleCancel}
         disabled={cancelling}
-        className="rounded-lg border border-red-300 px-5 py-3 font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-xl border border-red-300 bg-white px-5 py-3 font-semibold text-red-700 transition hover:bg-red-50 hover:border-red-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/60 dark:hover:border-red-700"
       >
         {cancelling ? "Cancelling..." : "Cancel Order"}
       </button>
 
       {error && (
-        <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <p className="mt-3 rounded-xl border border-red-100 bg-red-50 p-3 text-sm leading-5 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
           {error}
         </p>
       )}

@@ -28,7 +28,9 @@ type Profile = {
 export default function AdminInventoryHistory() {
     const supabase = createClient();
 
-    const [adjustments, setAdjustments] = useState<InventoryAdjustment[]>([]);
+    const [adjustments, setAdjustments] = useState<
+        InventoryAdjustment[]
+    >([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [loading, setLoading] = useState(true);
@@ -64,10 +66,11 @@ export default function AdminInventoryHistory() {
         ];
 
         if (productIds.length > 0) {
-            const { data: productData, error: productError } = await supabase
-                .from("products")
-                .select("id, name, sku")
-                .in("id", productIds);
+            const { data: productData, error: productError } =
+                await supabase
+                    .from("products")
+                    .select("id, name, sku")
+                    .in("id", productIds);
 
             if (productError) {
                 setMessage(productError.message);
@@ -79,10 +82,11 @@ export default function AdminInventoryHistory() {
         }
 
         if (userIds.length > 0) {
-            const { data: profileData, error: profileError } = await supabase
-                .from("profiles")
-                .select("id, full_name")
-                .in("id", userIds);
+            const { data: profileData, error: profileError } =
+                await supabase
+                    .from("profiles")
+                    .select("id, full_name")
+                    .in("id", userIds);
 
             if (profileError) {
                 setMessage(profileError.message);
@@ -116,14 +120,14 @@ export default function AdminInventoryHistory() {
     }
 
     return (
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-transparent bg-white p-6 shadow-sm transition-colors dark:border-green-900/70 dark:bg-green-950/70 dark:shadow-black/10">
             <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
-                    <h2 className="text-xl font-semibold">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                         Inventory History
                     </h2>
 
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
                         Recent stock adjustments made by admins.
                     </p>
                 </div>
@@ -132,106 +136,127 @@ export default function AdminInventoryHistory() {
                     type="button"
                     onClick={loadHistory}
                     disabled={loading}
-                    className="rounded-lg border px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+                    className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:bg-green-900"
                 >
                     {loading ? "Refreshing..." : "Refresh"}
                 </button>
             </div>
 
             {message && (
-                <p className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                <p className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/60 dark:text-red-300">
                     {message}
                 </p>
             )}
 
             {loading ? (
-                <p className="text-gray-500">Loading inventory history...</p>
+                <p className="text-gray-500 dark:text-gray-400">
+                    Loading inventory history...
+                </p>
             ) : adjustments.length === 0 ? (
-                <div className="rounded-xl border border-dashed p-8 text-center">
-                    <p className="font-medium text-gray-900">
+                <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center dark:border-green-800">
+                    <p className="font-medium text-gray-900 dark:text-white">
                         No inventory adjustments yet.
                     </p>
 
-                    <p className="mt-1 text-sm text-gray-500">
-                        Stock changes made through Adjust Stock will appear here.
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        Stock changes made through Adjust Stock will appear
+                        here.
                     </p>
                 </div>
             ) : (
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-sm">
                         <thead>
-                            <tr className="border-b text-left text-gray-500">
-                                <th className="px-3 py-3 font-medium">Date</th>
-                                <th className="px-3 py-3 font-medium">Product</th>
+                            <tr className="border-b border-gray-200 text-left text-gray-500 dark:border-green-900 dark:text-green-200/70">
+                                <th className="px-3 py-3 font-medium">
+                                    Date
+                                </th>
+                                <th className="px-3 py-3 font-medium">
+                                    Product
+                                </th>
                                 <th className="px-3 py-3 font-medium">
                                     Previous
                                 </th>
                                 <th className="px-3 py-3 font-medium">
                                     Change
                                 </th>
-                                <th className="px-3 py-3 font-medium">New</th>
-                                <th className="px-3 py-3 font-medium">Reason</th>
-                                <th className="px-3 py-3 font-medium">Admin</th>
+                                <th className="px-3 py-3 font-medium">
+                                    New
+                                </th>
+                                <th className="px-3 py-3 font-medium">
+                                    Reason
+                                </th>
+                                <th className="px-3 py-3 font-medium">
+                                    Admin
+                                </th>
                             </tr>
                         </thead>
 
                         <tbody>
                             {adjustments.map((adjustment) => {
-                                const product = getProduct(adjustment.product_id);
-                                const profile = getProfile(adjustment.user_id);
+                                const product = getProduct(
+                                    adjustment.product_id
+                                );
+                                const profile = getProfile(
+                                    adjustment.user_id
+                                );
 
                                 return (
                                     <tr
                                         key={adjustment.id}
-                                        className="border-b last:border-b-0"
+                                        className="border-b border-gray-200 last:border-b-0 dark:border-green-900/70"
                                     >
-                                        <td className="whitespace-nowrap px-3 py-4 text-gray-600">
-                                            {formatDate(adjustment.created_at)}
+                                        <td className="whitespace-nowrap px-3 py-4 text-gray-600 dark:text-gray-300">
+                                            {formatDate(
+                                                adjustment.created_at
+                                            )}
                                         </td>
 
                                         <td className="px-3 py-4">
-                                            <div className="font-medium text-gray-900">
-                                                {product?.name ?? "Unknown Product"}
+                                            <div className="font-medium text-gray-900 dark:text-white">
+                                                {product?.name ??
+                                                    "Unknown Product"}
                                             </div>
 
                                             {product?.sku && (
-                                                <div className="text-xs text-gray-500">
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">
                                                     SKU: {product.sku}
                                                 </div>
                                             )}
                                         </td>
 
-                                        <td className="px-3 py-4 text-gray-700">
+                                        <td className="px-3 py-4 text-gray-700 dark:text-gray-300">
                                             {adjustment.previous_quantity}
                                         </td>
 
                                         <td className="px-3 py-4">
                                             <span
                                                 className={
-                                                    adjustment.quantity_change > 0
-                                                        ? "font-semibold text-green-700"
-                                                        : "font-semibold text-red-600"
+                                                    adjustment.quantity_change >
+                                                        0
+                                                        ? "font-semibold text-green-700 dark:text-lime-300"
+                                                        : "font-semibold text-red-600 dark:text-red-300"
                                                 }
                                             >
-                                                {adjustment.quantity_change > 0
+                                                {adjustment.quantity_change >
+                                                    0
                                                     ? `+${adjustment.quantity_change}`
                                                     : adjustment.quantity_change}
                                             </span>
                                         </td>
 
-                                        <td className="px-3 py-4 font-medium text-gray-900">
+                                        <td className="px-3 py-4 font-medium text-gray-900 dark:text-white">
                                             {adjustment.new_quantity}
                                         </td>
 
-                                        <td className="max-w-xs px-3 py-4 text-gray-600">
+                                        <td className="max-w-xs px-3 py-4 text-gray-600 dark:text-gray-300">
                                             <span className="break-words">
                                                 {adjustment.reason}
                                             </span>
                                         </td>
 
-                                        <td className="px-3 py-4 text-gray-600">
-                                            {profile?.full_name ??
-                                                "Admin"}
+                                        <td className="px-3 py-4 text-gray-600 dark:text-gray-300">
+                                            {profile?.full_name ?? "Admin"}
                                         </td>
                                     </tr>
                                 );

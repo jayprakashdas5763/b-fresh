@@ -565,20 +565,22 @@ export default function ProductsPage() {
     });
 
     return (
-        <main className="min-h-screen bg-gray-50 p-6 md:p-8">
+        <main className="min-h-screen bg-gray-50 p-6 transition-colors dark:bg-[#07140d] md:p-8">
             <div className="mx-auto max-w-6xl">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold">Products</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                        Products
+                    </h1>
 
-                    <p className="mt-2 text-gray-600">
+                    <p className="mt-2 text-gray-600 dark:text-gray-300">
                         Manage the B-Fresh product catalog.
                     </p>
                 </div>
 
                 {/* Product form */}
-                <section className="mb-8 rounded-2xl bg-white p-6 shadow-sm">
+                <section className="mb-8 rounded-2xl border border-transparent bg-white p-6 shadow-sm dark:border-green-900/70 dark:bg-green-950/70 dark:shadow-black/10">
                     <div className="mb-5">
-                        <h2 className="text-xl font-semibold">
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                             {editingId ? "Edit Product" : "Add Product"}
                         </h2>
                     </div>
@@ -590,7 +592,7 @@ export default function ProductsPage() {
                             onChange={(event) => setName(event.target.value)}
                             placeholder="Product name"
                             required
-                            className="w-full rounded-lg border p-3"
+                            className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
                         />
 
                         <select
@@ -599,7 +601,7 @@ export default function ProductsPage() {
                                 setCategoryId(event.target.value)
                             }
                             required
-                            className="w-full rounded-lg border p-3"
+                            className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                         >
                             <option value="">Select category</option>
 
@@ -620,7 +622,7 @@ export default function ProductsPage() {
                             }
                             placeholder="Product description"
                             rows={4}
-                            className="w-full rounded-lg border p-3"
+                            className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
                         />
 
                         <div className="grid gap-4 md:grid-cols-2">
@@ -634,7 +636,7 @@ export default function ProductsPage() {
                                 }
                                 placeholder="Selling price (₹)"
                                 required
-                                className="w-full rounded-lg border p-3"
+                                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                             />
 
                             <input
@@ -646,7 +648,7 @@ export default function ProductsPage() {
                                     setCompareAtPrice(event.target.value)
                                 }
                                 placeholder="Original price (optional)"
-                                className="w-full rounded-lg border p-3"
+                                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
                             />
 
                             <input
@@ -657,7 +659,7 @@ export default function ProductsPage() {
                                 }
                                 placeholder="Unit (e.g. 1 litre, 500 g, piece)"
                                 required
-                                className="w-full rounded-lg border p-3"
+                                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
                             />
 
                             <div>
@@ -672,14 +674,14 @@ export default function ProductsPage() {
                                     placeholder="Stock quantity"
                                     required={!editingId}
                                     disabled={Boolean(editingId)}
-                                    className={`w-full rounded-lg border p-3 ${editingId
-                                        ? "!cursor-not-allowed !bg-gray-200 !text-gray-500"
-                                        : "bg-white text-gray-900"
+                                    className={`w-full rounded-lg border p-3 outline-none transition ${editingId
+                                        ? "cursor-not-allowed border-gray-300 bg-gray-200 text-gray-500 dark:border-green-900 dark:bg-green-900/40 dark:text-green-200/50"
+                                        : "border-gray-300 bg-white text-gray-900 focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                                         }`}
                                 />
 
                                 {editingId && (
-                                    <p className="mt-1 text-xs text-gray-500">
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-green-300/70">
                                         Stock is managed from Inventory.
                                     </p>
                                 )}
@@ -692,18 +694,18 @@ export default function ProductsPage() {
                                     setSku(event.target.value)
                                 }
                                 placeholder="SKU (optional)"
-                                className="w-full rounded-lg border p-3"
+                                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
                             />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-sm font-medium">
+                            <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-green-100">
                                 Product Image
                             </label>
 
                             <label
                                 htmlFor="product-image"
-                                className="inline-flex cursor-pointer items-center rounded-lg bg-black px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800"
+                                className="inline-flex cursor-pointer items-center rounded-lg bg-green-700 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-green-800 focus-within:ring-2 focus-within:ring-green-600 dark:bg-green-700 dark:hover:bg-green-600 dark:focus-within:ring-lime-400"
                             >
                                 Choose Image
                             </label>
@@ -721,7 +723,7 @@ export default function ProductsPage() {
                             />
 
                             {imageFile && (
-                                <span className="ml-3 text-sm text-gray-600">
+                                <span className="ml-3 text-sm text-gray-600 dark:text-gray-300">
                                     {imageFile.name}
                                 </span>
                             )}
@@ -731,7 +733,7 @@ export default function ProductsPage() {
                                     <img
                                         src={imagePreview}
                                         alt="Product preview"
-                                        className="h-40 w-40 rounded-xl border object-cover"
+                                        className="h-40 w-40 rounded-xl border border-gray-200 object-cover dark:border-green-800"
                                     />
                                 </div>
                             )}
@@ -755,7 +757,7 @@ export default function ProductsPage() {
                             <button
                                 type="submit"
                                 disabled={saving}
-                                className="rounded-lg bg-black px-5 py-3 text-white disabled:opacity-50"
+                                className="rounded-lg bg-green-700 px-5 py-3 font-medium text-white transition hover:bg-green-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-green-700 dark:hover:bg-green-600"
                             >
                                 {saving
                                     ? editingId
@@ -774,7 +776,7 @@ export default function ProductsPage() {
                                         resetForm();
                                         setMessage("");
                                     }}
-                                    className="rounded-lg border border-gray-300 px-5 py-3 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                    className="rounded-lg border border-gray-300 bg-white px-5 py-3 text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:bg-green-900"
                                 >
                                     Cancel
                                 </button>
@@ -783,15 +785,17 @@ export default function ProductsPage() {
                     </form>
 
                     {message && (
-                        <p className="mt-4 rounded-lg bg-gray-100 p-3 text-sm">
+                        <p className="mt-4 rounded-lg border border-gray-200 bg-gray-100 p-3 text-sm text-gray-700 dark:border-green-900 dark:bg-green-900/40 dark:text-green-100">
                             {message}
                         </p>
                     )}
                 </section>
 
                 {/* Product list */}
-                <section className="rounded-2xl bg-white p-6 shadow-sm">
-                    <h2 className="mb-5 text-xl font-semibold">Products</h2>
+                <section className="rounded-2xl border border-transparent bg-white p-6 shadow-sm dark:border-green-900/70 dark:bg-green-950/70 dark:shadow-black/10">
+                    <h2 className="mb-5 text-xl font-semibold text-gray-900 dark:text-white">
+                        Products
+                    </h2>
 
                     <div className="mb-6 grid gap-3 md:grid-cols-3">
                         <input
@@ -801,7 +805,7 @@ export default function ProductsPage() {
                                 setSearchTerm(event.target.value)
                             }
                             placeholder="Search by name or SKU"
-                            className="rounded-lg border border-gray-300 p-3 text-gray-900"
+                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:placeholder:text-green-400/60 dark:focus:border-lime-400 dark:focus:ring-green-950"
                         />
 
                         <select
@@ -809,7 +813,7 @@ export default function ProductsPage() {
                             onChange={(event) =>
                                 setFilterCategory(event.target.value)
                             }
-                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
+                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                         >
                             <option value="all">All Categories</option>
 
@@ -828,7 +832,7 @@ export default function ProductsPage() {
                             onChange={(event) =>
                                 setFilterStatus(event.target.value)
                             }
-                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
+                            className="rounded-lg border border-gray-300 bg-white p-3 text-gray-900 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100 dark:border-green-800 dark:bg-[#102019] dark:text-white dark:focus:border-lime-400 dark:focus:ring-green-950"
                         >
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
@@ -837,12 +841,12 @@ export default function ProductsPage() {
                     </div>
 
                     {loading ? (
-                        <p className="text-gray-500">
+                        <p className="text-gray-500 dark:text-gray-400">
                             Loading products...
                         </p>
                     ) : filteredProducts.length === 0 ? (
-                        <div className="rounded-xl border border-dashed p-8 text-center">
-                            <p className="font-medium text-gray-900">
+                        <div className="rounded-xl border border-dashed border-gray-300 p-8 text-center dark:border-green-800">
+                            <p className="font-medium text-gray-900 dark:text-white">
                                 {products.length === 0
                                     ? "No products yet."
                                     : "No products match your filters."}
@@ -856,7 +860,7 @@ export default function ProductsPage() {
                                         setFilterCategory("all");
                                         setFilterStatus("all");
                                     }}
-                                    className="mt-3 text-sm font-medium text-green-700 hover:text-green-800"
+                                    className="mt-3 text-sm font-medium text-green-700 hover:text-green-800 dark:text-lime-300 dark:hover:text-lime-200"
                                 >
                                     Clear filters
                                 </button>
@@ -867,11 +871,27 @@ export default function ProductsPage() {
                             {filteredProducts.map((product) => (
                                 <div
                                     key={product.id}
-                                    className="rounded-xl border p-4"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => {
+                                        if (!actionProductId) {
+                                            startEdit(product);
+                                        }
+                                    }}
+                                    onKeyDown={(event) => {
+                                        if (
+                                            !actionProductId &&
+                                            (event.key === "Enter" || event.key === " ")
+                                        ) {
+                                            event.preventDefault();
+                                            startEdit(product);
+                                        }
+                                    }}
+                                    className="cursor-pointer rounded-xl border border-gray-200 p-4 transition hover:border-green-300 hover:bg-green-50/40 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 dark:border-green-900 dark:hover:border-green-700 dark:hover:bg-green-900/20 dark:focus:ring-lime-400 dark:focus:ring-offset-green-950"
                                 >
                                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                                         <div className="flex min-w-0 gap-4">
-                                            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100">
+                                            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-green-900/60">
                                                 {product.product_images
                                                     ?.length > 0 ? (
                                                     <img
@@ -906,17 +926,17 @@ export default function ProductsPage() {
                                             </div>
 
                                             <div className="min-w-0">
-                                                <h3 className="font-semibold text-gray-900">
+                                                <h3 className="font-semibold text-gray-900 dark:text-white">
                                                     {product.name}
                                                 </h3>
 
-                                                <p className="text-sm text-gray-500">
+                                                <p className="text-sm text-gray-500 dark:text-green-200/70">
                                                     {getCategoryName(
                                                         product.category_id
                                                     )}
                                                 </p>
 
-                                                <p className="mt-1 text-gray-900">
+                                                <p className="mt-1 text-gray-900 dark:text-green-100">
                                                     ₹
                                                     {Number(
                                                         product.price
@@ -924,21 +944,21 @@ export default function ProductsPage() {
                                                     / {product.unit}
                                                 </p>
 
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-sm text-gray-600 dark:text-gray-300">
                                                     Stock:{" "}
                                                     {product.stock_quantity}
                                                 </p>
 
                                                 {product.sku && (
-                                                    <p className="text-sm text-gray-500">
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
                                                         SKU: {product.sku}
                                                     </p>
                                                 )}
 
                                                 <span
                                                     className={`mt-2 inline-block rounded-full px-2 py-1 text-xs ${product.is_active
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-gray-100 text-gray-600"
+                                                        ? "bg-green-100 text-green-700 dark:bg-green-950/70 dark:text-green-300"
+                                                        : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                                                         }`}
                                                 >
                                                     {product.is_active
@@ -951,23 +971,33 @@ export default function ProductsPage() {
                                         <div className="flex flex-wrap gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => startEdit(product)}
-                                                disabled={actionProductId !== null}
-                                                className="rounded-lg border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    startEdit(product);
+                                                }}
+                                                disabled={
+                                                    actionProductId !== null
+                                                }
+                                                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:bg-green-900"
                                             >
                                                 Edit
                                             </button>
 
                                             <button
                                                 type="button"
-                                                onClick={() => toggleProduct(product)}
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    toggleProduct(product);
+                                                }}
                                                 disabled={actionProductId !== null}
-                                                className="rounded-lg border px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                                                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-green-800 dark:bg-green-950/60 dark:text-green-100 dark:hover:bg-green-900"
                                             >
                                                 {actionProductId === product.id ? (
                                                     <span className="inline-flex items-center gap-2">
-                                                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
-                                                        {product.is_active ? "Deactivating..." : "Activating..."}
+                                                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700 dark:border-green-700 dark:border-t-lime-300" />
+                                                        {product.is_active
+                                                            ? "Deactivating..."
+                                                            : "Activating..."}
                                                     </span>
                                                 ) : product.is_active ? (
                                                     "Deactivate"
@@ -978,13 +1008,16 @@ export default function ProductsPage() {
 
                                             <button
                                                 type="button"
-                                                onClick={() => deleteProduct(product.id)}
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    deleteProduct(product.id);
+                                                }}
                                                 disabled={actionProductId !== null}
-                                                className="rounded-lg border border-red-300 px-3 py-2 text-sm text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                                className="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300 dark:hover:bg-red-950/60"
                                             >
                                                 {actionProductId === product.id ? (
                                                     <span className="inline-flex items-center gap-2">
-                                                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-200 border-t-red-600" />
+                                                        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-red-200 border-t-red-600 dark:border-red-900 dark:border-t-red-300" />
                                                         Deleting...
                                                     </span>
                                                 ) : (
