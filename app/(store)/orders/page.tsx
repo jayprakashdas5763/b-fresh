@@ -289,6 +289,8 @@ export default async function OrdersPage() {
                     <div className="border-t border-green-100 bg-white/50 px-5 py-4 dark:border-green-900 dark:bg-green-950/40 sm:px-6">
                       <CancelOrderButton
                         orderId={order.id}
+                        paymentMethod={order.payment_method}
+                        paymentStatus={order.payment_status}
                       />
                     </div>
                   )}
