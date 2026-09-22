@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import AdminOrderNotes from "@/components/admin-order-notes";
+import AdminOrderLocation from "@/components/admin-order-location";
 
 type AdminOrderPageProps = {
     params: Promise<{
@@ -19,40 +20,45 @@ export default async function AdminOrderPage({
     const { data: order, error } = await supabase
         .from("orders")
         .select(`
-            id,
-            order_number,
-            user_id,
-            status,
-            payment_method,
-            payment_status,
-            subtotal,
-            delivery_fee,
-            discount_amount,
-            total_amount,
-            shipping_full_name,
-            shipping_phone,
-            shipping_address_line1,
-            shipping_address_line2,
-            shipping_landmark,
-            shipping_city,
-            shipping_state,
-            shipping_postal_code,
-            customer_note,
-            admin_note,
-            created_at,
-            updated_at,
-            order_items (
-                id,
-                product_id,
-                product_name,
-                product_sku,
-                unit,
-                quantity,
-                unit_price,
-                total_price,
-                created_at
-            )
-        `)
+      id,
+      order_number,
+      user_id,
+      status,
+      payment_method,
+      payment_status,
+      subtotal,
+      delivery_fee,
+      discount_amount,
+      total_amount,
+      shipping_full_name,
+      shipping_phone,
+      shipping_address_line1,
+      shipping_address_line2,
+      shipping_landmark,
+      shipping_city,
+      shipping_state,
+      shipping_postal_code,
+      shipping_latitude,
+      shipping_longitude,
+      shipping_location_accuracy_meters,
+      shipping_location_source,
+      shipping_location_confirmed_at,
+      customer_note,
+      admin_note,
+      created_at,
+      updated_at,
+      order_items (
+        id,
+        product_id,
+        product_name,
+        product_sku,
+        unit,
+        quantity,
+        unit_price,
+        total_price,
+        created_at
+      )
+    `)
         .eq("id", id)
         .single();
 
@@ -192,6 +198,33 @@ export default async function AdminOrderPage({
                     </section>
                 </div>
 
+                {/* Delivery Location */}
+                <div className="mt-6">
+                    <AdminOrderLocation
+                        latitude={
+                            order.shipping_latitude !== null
+                                ? Number(order.shipping_latitude)
+                                : null
+                        }
+                        longitude={
+                            order.shipping_longitude !== null
+                                ? Number(order.shipping_longitude)
+                                : null
+                        }
+                        accuracy={
+                            order.shipping_location_accuracy_meters !== null
+                                ? Number(
+                                    order.shipping_location_accuracy_meters
+                                )
+                                : null
+                        }
+                        source={order.shipping_location_source}
+                        confirmedAt={
+                            order.shipping_location_confirmed_at
+                        }
+                    />
+                </div>
+
                 {/* Order items */}
                 <section className="mt-6 rounded-2xl border border-transparent bg-white p-6 shadow-sm dark:border-green-900/70 dark:bg-green-950/70 dark:shadow-black/10">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -205,18 +238,23 @@ export default async function AdminOrderPage({
                                     <th className="pb-3 pr-4 font-medium">
                                         Product
                                     </th>
+
                                     <th className="pb-3 pr-4 font-medium">
                                         SKU
                                     </th>
+
                                     <th className="pb-3 pr-4 font-medium">
                                         Unit
                                     </th>
+
                                     <th className="pb-3 pr-4 text-right font-medium">
                                         Qty
                                     </th>
+
                                     <th className="pb-3 pr-4 text-right font-medium">
                                         Unit Price
                                     </th>
+
                                     <th className="pb-3 text-right font-medium">
                                         Total
                                     </th>

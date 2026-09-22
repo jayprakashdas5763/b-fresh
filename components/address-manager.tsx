@@ -2,7 +2,9 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-
+import DeliveryLocationPicker, {
+  type DeliveryLocation,
+} from "@/components/delivery-location-picker";
 type Address = {
   id: string;
   label: string;
@@ -14,6 +16,11 @@ type Address = {
   city: string;
   state: string;
   postal_code: string;
+  latitude: number | null;
+  longitude: number | null;
+  location_accuracy_meters: number | null;
+  location_source: string | null;
+  location_confirmed_at: string | null;
   is_default: boolean;
 };
 
@@ -105,6 +112,8 @@ export default function AddressManager() {
   const [city, setCity] = useState(emptyForm.city);
   const [state, setState] = useState(emptyForm.state);
   const [postalCode, setPostalCode] = useState(emptyForm.postalCode);
+  const [selectedLocation, setSelectedLocation] =
+    useState<DeliveryLocation | null>(null);
 
   function clearFeedback() {
     setMessage("");
@@ -121,6 +130,7 @@ export default function AddressManager() {
     setCity("");
     setState("Odisha");
     setPostalCode("");
+    setSelectedLocation(null);
     setEditingId(null);
   }
 
@@ -153,6 +163,11 @@ export default function AddressManager() {
                 city,
                 state,
                 postal_code,
+                latitude,
+                longitude,
+                location_accuracy_meters,
+                location_source,
+                location_confirmed_at,
                 is_default
             `,
       )
@@ -184,6 +199,26 @@ export default function AddressManager() {
     setCity(address.city);
     setState(address.state);
     setPostalCode(address.postal_code);
+    if (
+      typeof address.latitude === "number" &&
+      typeof address.longitude === "number"
+    ) {
+      setSelectedLocation({
+        latitude: address.latitude,
+        longitude: address.longitude,
+        accuracy: address.location_accuracy_meters,
+        source:
+          address.location_source === "gps" ? "gps" : "map",
+        formattedAddress: null,
+        addressLine1: address.address_line1,
+        addressLine2: address.address_line2,
+        city: address.city,
+        state: address.state,
+        postalCode: address.postal_code,
+      });
+    } else {
+      setSelectedLocation(null);
+    }
 
     clearFeedback();
 
@@ -193,6 +228,33 @@ export default function AddressManager() {
         behavior: "smooth",
         block: "start",
       });
+  }
+
+  function handleLocationConfirmed(location: DeliveryLocation) {
+    setSelectedLocation(location);
+
+    if (location.addressLine1) {
+      setAddressLine1(location.addressLine1);
+    }
+
+    if (location.addressLine2) {
+      setAddressLine2(location.addressLine2);
+    }
+
+    if (location.city) {
+      setCity(location.city);
+    }
+
+    if (location.state) {
+      setState(location.state);
+    }
+
+    if (location.postalCode) {
+      setPostalCode(location.postalCode);
+    }
+
+    clearFeedback();
+    setMessage("Delivery location confirmed. You can review the address details below.");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -227,6 +289,13 @@ export default function AddressManager() {
 
     if (!/^\d{6}$/.test(cleanPostalCode)) {
       setError("Please enter a valid 6-digit PIN code.");
+      return;
+    }
+
+    if (!selectedLocation) {
+      setError(
+        "Please confirm your delivery location on the map before saving the address.",
+      );
       return;
     }
 
@@ -283,6 +352,13 @@ export default function AddressManager() {
             city: cleanCity,
             state: cleanState,
             postal_code: cleanPostalCode,
+            latitude: selectedLocation.latitude,
+            longitude: selectedLocation.longitude,
+            location_accuracy_meters:
+              selectedLocation.accuracy,
+            location_source: selectedLocation.source,
+            location_confirmed_at:
+              new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq("id", editingId)
@@ -309,6 +385,15 @@ export default function AddressManager() {
             city: cleanCity,
             state: cleanState,
             postal_code: cleanPostalCode,
+
+            latitude: selectedLocation.latitude,
+            longitude: selectedLocation.longitude,
+            location_accuracy_meters:
+              selectedLocation.accuracy,
+            location_source: selectedLocation.source,
+            location_confirmed_at:
+              new Date().toISOString(),
+
             is_default: shouldBeDefault,
           });
 
@@ -522,6 +607,19 @@ export default function AddressManager() {
             onSubmit={handleSubmit}
             className="space-y-4 p-5 sm:p-6"
           >
+            <DeliveryLocationPicker
+              initialLatitude={
+                selectedLocation?.latitude ?? null
+              }
+              initialLongitude={
+                selectedLocation?.longitude ?? null
+              }
+              initialAccuracy={
+                selectedLocation?.accuracy ?? null
+              }
+              onLocationConfirmed={handleLocationConfirmed}
+            />
+
             {/* Label */}
             <div>
               <label
@@ -851,22 +949,22 @@ export default function AddressManager() {
                 <article
                   key={address.id}
                   className={`overflow-hidden rounded-3xl border bg-[#fffdf7] shadow-sm transition dark:bg-green-950/70 ${address.is_default
-                      ? "border-green-200 shadow-green-900/5 dark:border-green-700"
-                      : "border-green-100 hover:border-green-200 hover:shadow-md dark:border-green-900 dark:hover:border-green-700"
+                    ? "border-green-200 shadow-green-900/5 dark:border-green-700"
+                    : "border-green-100 hover:border-green-200 hover:shadow-md dark:border-green-900 dark:hover:border-green-700"
                     }`}
                 >
                   {/* Card header */}
                   <div
                     className={`flex items-center justify-between gap-3 border-b px-5 py-4 ${address.is_default
-                        ? "border-green-100 bg-green-50/80 dark:border-green-900 dark:bg-green-950"
-                        : "border-green-100 bg-white/60 dark:border-green-900 dark:bg-green-950/40"
+                      ? "border-green-100 bg-green-50/80 dark:border-green-900 dark:bg-green-950"
+                      : "border-green-100 bg-white/60 dark:border-green-900 dark:bg-green-950/40"
                       }`}
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <div
                         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${address.is_default
-                            ? "bg-green-700 text-white"
-                            : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-lime-300"
+                          ? "bg-green-700 text-white"
+                          : "bg-green-100 text-green-700 dark:bg-green-900 dark:text-lime-300"
                           }`}
                       >
                         <HomeIcon />

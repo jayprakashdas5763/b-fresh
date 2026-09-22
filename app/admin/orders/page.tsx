@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AdminOrdersMap from "@/components/admin-orders-map";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 
@@ -26,6 +27,11 @@ type Order = {
     customer_note: string | null;
     admin_note: string | null;
     created_at: string;
+    shipping_latitude: number | null;
+    shipping_longitude: number | null;
+    shipping_location_accuracy_meters: number | null;
+    shipping_location_source: string | null;
+    shipping_location_confirmed_at: string | null;
 };
 
 const ORDER_STATUSES = [
@@ -77,6 +83,11 @@ export default function AdminOrdersPage() {
                 shipping_city,
                 shipping_state,
                 shipping_postal_code,
+                shipping_latitude,
+                shipping_longitude,
+                shipping_location_accuracy_meters,
+                shipping_location_source,
+                shipping_location_confirmed_at,
                 customer_note,
                 admin_note,
                 created_at
@@ -149,12 +160,12 @@ export default function AdminOrdersPage() {
                 current.map((order) =>
                     order.id === orderId
                         ? {
-                              ...order,
-                              status,
-                              payment_status:
-                                  updateData.payment_status ??
-                                  order.payment_status,
-                          }
+                            ...order,
+                            status,
+                            payment_status:
+                                updateData.payment_status ??
+                                order.payment_status,
+                        }
                         : order
                 )
             );
@@ -200,6 +211,28 @@ export default function AdminOrdersPage() {
             matchesPaymentStatus
         );
     });
+
+    const activeMapOrders = filteredOrders
+        .filter(
+            (order) =>
+                [
+                    "pending",
+                    "confirmed",
+                    "processing",
+                    "packed",
+                    "out_for_delivery",
+                ].includes(order.status) &&
+                order.shipping_latitude !== null &&
+                order.shipping_longitude !== null
+        )
+        .map((order) => ({
+            id: order.id,
+            order_number: order.order_number,
+            status: order.status,
+            shipping_full_name: order.shipping_full_name,
+            shipping_latitude: Number(order.shipping_latitude),
+            shipping_longitude: Number(order.shipping_longitude),
+        }));
 
     return (
         <main className="min-h-screen bg-gray-50 px-4 py-8 transition-colors dark:bg-[#07140d] sm:px-6 lg:px-8">
@@ -297,6 +330,12 @@ export default function AdminOrdersPage() {
                 {message && (
                     <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/50 dark:text-red-300">
                         {message}
+                    </div>
+                )}
+
+                {!loading && activeMapOrders.length > 0 && (
+                    <div className="mt-8">
+                        <AdminOrdersMap orders={activeMapOrders} />
                     </div>
                 )}
 
@@ -468,18 +507,17 @@ export default function AdminOrdersPage() {
                                                     Payment status:
                                                 </span>{" "}
                                                 <span
-                                                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                                        order.payment_status ===
+                                                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${order.payment_status ===
                                                         "paid"
-                                                            ? "bg-green-100 text-green-800 dark:bg-green-950/70 dark:text-green-300"
+                                                        ? "bg-green-100 text-green-800 dark:bg-green-950/70 dark:text-green-300"
+                                                        : order.payment_status ===
+                                                            "failed"
+                                                            ? "bg-red-100 text-red-800 dark:bg-red-950/70 dark:text-red-300"
                                                             : order.payment_status ===
-                                                                "failed"
-                                                              ? "bg-red-100 text-red-800 dark:bg-red-950/70 dark:text-red-300"
-                                                              : order.payment_status ===
-                                                                  "refunded"
+                                                                "refunded"
                                                                 ? "bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300"
                                                                 : "bg-yellow-100 text-yellow-800 dark:bg-yellow-950/70 dark:text-yellow-300"
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {order.payment_status}
                                                 </span>
@@ -490,32 +528,32 @@ export default function AdminOrdersPage() {
 
                                 {(order.customer_note ||
                                     order.admin_note) && (
-                                    <div className="mt-6 grid gap-4 border-t border-gray-200 pt-6 dark:border-green-900 md:grid-cols-2">
-                                        {order.customer_note && (
-                                            <div className="rounded-xl bg-gray-50 p-4 dark:bg-green-900/40">
-                                                <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                    Customer Note
-                                                </h3>
+                                        <div className="mt-6 grid gap-4 border-t border-gray-200 pt-6 dark:border-green-900 md:grid-cols-2">
+                                            {order.customer_note && (
+                                                <div className="rounded-xl bg-gray-50 p-4 dark:bg-green-900/40">
+                                                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                                                        Customer Note
+                                                    </h3>
 
-                                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                                    {order.customer_note}
-                                                </p>
-                                            </div>
-                                        )}
+                                                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                                                        {order.customer_note}
+                                                    </p>
+                                                </div>
+                                            )}
 
-                                        {order.admin_note && (
-                                            <div className="rounded-xl bg-gray-50 p-4 dark:bg-green-900/40">
-                                                <h3 className="font-semibold text-gray-900 dark:text-white">
-                                                    Admin Note
-                                                </h3>
+                                            {order.admin_note && (
+                                                <div className="rounded-xl bg-gray-50 p-4 dark:bg-green-900/40">
+                                                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                                                        Admin Note
+                                                    </h3>
 
-                                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                                    {order.admin_note}
-                                                </p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                                                        {order.admin_note}
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                             </section>
                         ))}
                     </div>
