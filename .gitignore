@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Project tree files
+tree.ps1
+project-tree.txt
+#.\tree.ps1 | Out-File project-tree.txt -Encoding utf8
