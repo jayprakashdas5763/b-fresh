@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 
 export default function SiteFooter() {
@@ -47,7 +46,7 @@ export default function SiteFooter() {
               </Link>
 
               <Link
-                href="/products"
+                href="/#categories"
                 className="block text-gray-600 transition hover:text-green-700 dark:text-gray-300 dark:hover:text-green-400"
               >
                 Categories
